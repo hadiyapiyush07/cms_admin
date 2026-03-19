@@ -11,7 +11,7 @@ const StudentManagement = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Initial form state matching the schema
+  // Initial form state matching the schema + qualification fields
   const [formData, setFormData] = useState({
     enrollmentNum: '',
     aadharNumber: '',
@@ -45,7 +45,60 @@ const StudentManagement = () => {
     password: '',
     isActive: true,
     profilePicture: '',
+    // 10th qualification
+    tenthBoard: '',
+    tenthAdmitNumber: '',
+    tenthPassingYear: '',
+    tenthMarksObtained: '',
+    // 12th qualification
+    twelfthBoard: '',
+    twelfthAdmitNumber: '',
+    twelfthPassingYear: '',
+    twelfthMarksObtained: '',
+    twelfthTotalMarks: '',
   });
+
+  // Helper to get duration (years) from department name
+  const getDurationFromDepartment = (deptId) => {
+    if (!deptId) return null;
+    const dept = departments.find(d => d._id === deptId);
+    if (!dept) return null;
+    const name = dept.name.toUpperCase();
+    // Bachelor programs (3 years)
+    if (name === 'BCOM' || name === 'BBA' || name === 'BCA') return 3;
+    // Master programs (2 years)
+    if (name === 'MCOM' || name === 'MBA' || name === 'MCA') return 2;
+    return null;
+  };
+
+  // Auto‑update batch when admissionYear or department changes
+  useEffect(() => {
+    if (formData.admissionYear && formData.department) {
+      const duration = getDurationFromDepartment(formData.department);
+      if (duration) {
+        const start = parseInt(formData.admissionYear);
+        const end = start + duration;
+        // Format: "2023-26" (last two digits of end year)
+        const batch = `${start}-${end.toString().slice(-2)}`;
+        setFormData(prev => ({ ...prev, batch }));
+      }
+    }
+  }, [formData.admissionYear, formData.department, departments]);
+
+  // Auto‑update currentYear based on selected semester
+  useEffect(() => {
+    if (formData.semesterID && semesters.length) {
+      const semester = semesters.find(s => s._id === formData.semesterID);
+      if (semester && semester.semesterName) {
+        const match = semester.semesterName.match(/\d+/);
+        if (match) {
+          const semNum = parseInt(match[0]);
+          const year = Math.ceil(semNum / 2);
+          setFormData(prev => ({ ...prev, currentYear: year }));
+        }
+      }
+    }
+  }, [formData.semesterID, semesters]);
 
   // Fetch departments and semesters on component mount
   useEffect(() => {
@@ -68,7 +121,7 @@ const StudentManagement = () => {
 
         if (deptRes.data.success) setDepartments(deptRes.data.data);
         if (semRes.data.success) setSemesters(semRes.data.data);
-        setError(''); // clear any previous error
+        setError('');
       } catch (err) {
         console.error('Failed to fetch departments/semesters', err.response?.data || err.message);
         if (err.response?.status === 401 || err.response?.status === 403) {
@@ -175,6 +228,15 @@ const StudentManagement = () => {
           password: '',
           isActive: true,
           profilePicture: '',
+          tenthBoard: '',
+          tenthAdmitNumber: '',
+          tenthPassingYear: '',
+          tenthMarksObtained: '',
+          twelfthBoard: '',
+          twelfthAdmitNumber: '',
+          twelfthPassingYear: '',
+          twelfthMarksObtained: '',
+          twelfthTotalMarks: '',
         });
       } else {
         setError(response.data.message || 'Failed to add student.');
@@ -186,6 +248,16 @@ const StudentManagement = () => {
       setSubmitting(false);
     }
   };
+
+  // Calculate 10th percentage (total fixed at 600)
+  const tenthPercentage = formData.tenthMarksObtained
+    ? ((formData.tenthMarksObtained / 600) * 100).toFixed(2)
+    : '';
+
+  // Calculate 12th percentage
+  const twelfthPercentage = (formData.twelfthMarksObtained && formData.twelfthTotalMarks)
+    ? ((formData.twelfthMarksObtained / formData.twelfthTotalMarks) * 100).toFixed(2)
+    : '';
 
   if (loading) {
     return (
@@ -520,6 +592,146 @@ const StudentManagement = () => {
           </div>
         </section>
 
+        
+        
+
+        {/* 10th Qualification Details */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">10th Qualification Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Board</label>
+              <input
+                type="text"
+                name="tenthBoard"
+                value={formData.tenthBoard}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Admit Number</label>
+              <input
+                type="text"
+                name="tenthAdmitNumber"
+                value={formData.tenthAdmitNumber}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Passing Year</label>
+              <input
+                type="number"
+                name="tenthPassingYear"
+                value={formData.tenthPassingYear}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Marks Obtained</label>
+              <input
+                type="number"
+                name="tenthMarksObtained"
+                value={formData.tenthMarksObtained}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                min="0"
+                max="600"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Total Marks</label>
+              <input
+                type="number"
+                value="600"
+                disabled
+                className="w-full p-2 border rounded bg-gray-100"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Percentage (%)</label>
+              <input
+                type="text"
+                value={tenthPercentage}
+                readOnly
+                className="w-full p-2 border rounded bg-gray-100"
+                placeholder="Auto-calculated"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* 12th Qualification Details */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2">12th Qualification Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Board</label>
+              <input
+                type="text"
+                name="twelfthBoard"
+                value={formData.twelfthBoard}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Admit Number</label>
+              <input
+                type="text"
+                name="twelfthAdmitNumber"
+                value={formData.twelfthAdmitNumber}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Passing Year</label>
+              <input
+                type="number"
+                name="twelfthPassingYear"
+                value={formData.twelfthPassingYear}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Marks Obtained</label>
+              <input
+                type="number"
+                name="twelfthMarksObtained"
+                value={formData.twelfthMarksObtained}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Total Marks</label>
+              <input
+                type="number"
+                name="twelfthTotalMarks"
+                value={formData.twelfthTotalMarks}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Percentage (%)</label>
+              <input
+                type="text"
+                value={twelfthPercentage}
+                readOnly
+                className="w-full p-2 border rounded bg-gray-100"
+                placeholder="Auto-calculated"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Academic Details */}
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">Academic Details</h2>
@@ -541,7 +753,8 @@ const StudentManagement = () => {
                 name="batch"
                 value={formData.batch}
                 onChange={handleChange}
-                className="w-full p-2 border rounded"
+                readOnly
+                className="w-full p-2 border rounded bg-gray-100"
               />
             </div>
             <div>
@@ -585,14 +798,17 @@ const StudentManagement = () => {
                 name="currentYear"
                 value={formData.currentYear}
                 onChange={handleChange}
+                readOnly
                 min="1"
                 max="3"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-gray-100"
               />
             </div>
           </div>
         </section>
 
+          
+                
         {/* System Fields */}
         <section>
           <h2 className="text-xl font-semibold mb-4 border-b pb-2">System & Security</h2>

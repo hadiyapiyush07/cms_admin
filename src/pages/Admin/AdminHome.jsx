@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const adminHome = () => {
+const AdminHome = () => {   // Capitalized component name (optional but conventional)
   const [adminData, setAdminData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -21,10 +21,11 @@ const adminHome = () => {
         setAdminData(JSON.parse(storedData));
       }
 
-      // Optionally fetch fresh data from backend
-      const token = localStorage.getItem('adminToken');
+      // Use the correct token key: 'authToken'
+      const token = localStorage.getItem('authToken');   
       if (token) {
         try {
+          // Optional: fetch fresh data – adjust endpoint if needed
           const response = await axios.get('http://localhost:5000/api/admin/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -36,7 +37,7 @@ const adminHome = () => {
         } catch (error) {
           console.error('Failed to fetch fresh admin data', error);
           if (error.response?.status === 401) {
-            localStorage.removeItem('adminToken');
+            localStorage.removeItem('authToken');       
             localStorage.removeItem('adminData');
             navigate('/admin/signin');
           }
@@ -52,7 +53,7 @@ const adminHome = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+    localStorage.removeItem('authToken');   
     localStorage.removeItem('adminData');
     navigate('/admin/signin');
   };
@@ -188,4 +189,4 @@ const ActionCard = ({ title, description, icon, color, onClick }) => (
   </div>
 );
 
-export default adminHome;
+export default AdminHome;
