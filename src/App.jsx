@@ -5,6 +5,8 @@ import StudentManagement from './pages/Admin/StudentManagement';
 import ProfessorManagement from './pages/Admin/ProfessorManagement';
 import HandleGallery from './pages/Admin/HandleGallery';
 import AdminHome from './pages/Admin/AdminHome';
+import StudentForm from './components/StudentForm';
+import StudentList from './components/StudentList';
 
 function App() {
   return (
