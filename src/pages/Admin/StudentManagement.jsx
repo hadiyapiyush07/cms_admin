@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import StudentForm from '../../components/StudentForm';
 import StudentList from '../../components/StudentList';
+import { Plus , ArrowLeft} from 'lucide-react';
+
 
 const StudentManagement = () => {
   const [view, setView] = useState('list'); // 'list' or 'form'
@@ -36,16 +38,16 @@ const StudentManagement = () => {
         {view === 'list' ? (
           <button
             onClick={handleAddClick}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex justify-between items-center gap-2"
           >
-            + Add New Student
+            <Plus size={16} /> Add New Student
           </button>
         ) : (
           <button
             onClick={handleCancel}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded flex justify-between items-center gap-2"
           >
-            ← Back to List
+            <ArrowLeft size={16} /> Back to List
           </button>
         )}
       </div>
