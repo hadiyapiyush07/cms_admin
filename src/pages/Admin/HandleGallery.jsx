@@ -60,7 +60,7 @@ const HandleGallery = () => {
     const res = await fetch('http://localhost:5000/api/upload', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
       },
       body: formData,
     });
@@ -106,7 +106,7 @@ const HandleGallery = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({ title, date, cover: coverUrl, photos: photoUrls })
       });
@@ -141,7 +141,7 @@ const HandleGallery = () => {
       const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
 
@@ -226,7 +226,7 @@ const HandleGallery = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           title: editTitle,

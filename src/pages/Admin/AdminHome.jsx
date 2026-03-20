@@ -30,7 +30,7 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.success) {
-            const freshData = response.data.admin;
+            const freshData = response.data.data;
             setAdminData(freshData);
             localStorage.setItem('adminData', JSON.stringify(freshData));
           }
