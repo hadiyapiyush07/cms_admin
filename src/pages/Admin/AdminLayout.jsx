@@ -35,6 +35,10 @@ const AdminLayout = () => {
             <NavLink to="/admin/handlegallery" className={navClass}>
               Handle Gallery
             </NavLink>
+
+            <NavLink to="/admin/notification" className={navClass}>
+              Notification
+            </NavLink>
             
           </nav>
 
