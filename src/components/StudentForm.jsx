@@ -8,7 +8,8 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [departments, setDepartments] = useState([]);
-  const [semesters, setSemesters] = useState([]);
+  const [allSemesters, setAllSemesters] = useState([]);   // all semesters from DB
+  const [filteredSemesters, setFilteredSemesters] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -67,13 +68,10 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
         ...initialData,
         department: initialData.department?._id || initialData.department || '',
         semesterID: initialData.semesterID?._id || initialData.semesterID || '',
-        // Ensure dates are in YYYY-MM-DD format for input
         dob: initialData.dob ? new Date(initialData.dob).toISOString().split('T')[0] : '',
-        // If password is present, don't prefill it (security)
         password: '',
       });
     } else {
-      // Reset to empty for add mode
       setFormData(emptyForm);
     }
   }, [initialData, mode]);
@@ -89,7 +87,10 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
           axios.get('http://localhost:5000/api/semesters', { headers }),
         ]);
         if (deptRes.data.success) setDepartments(deptRes.data.data);
-        if (semRes.data.success) setSemesters(semRes.data.data);
+        if (semRes.data.success) {
+          setAllSemesters(semRes.data.data);
+          setFilteredSemesters(semRes.data.data); // initially show all
+        }
       } catch (err) {
         setError('Could not load departments or semesters.');
       }
@@ -97,7 +98,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     fetchData();
   }, []);
 
-  // Helper to get duration from department
+  // Helper to get duration from department ID
   const getDurationFromDepartment = (deptId) => {
     if (!deptId) return null;
     const dept = departments.find(d => d._id === deptId);
@@ -107,6 +108,42 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     if (['MCOM', 'MBA', 'MCA'].includes(name)) return 2;
     return null;
   };
+
+  // Filter semesters based on selected department
+  useEffect(() => {
+    if (!formData.department) {
+      setFilteredSemesters(allSemesters);
+      return;
+    }
+    const duration = getDurationFromDepartment(formData.department);
+    if (duration === 3) {
+      // Bachelor – show semesters 1‑6
+      const bachelorSemesters = allSemesters.filter(s => {
+        const semNum = parseInt(s.semesterName.match(/\d+/)?.[0] || 0);
+        return semNum >= 1 && semNum <= 6;
+      });
+      setFilteredSemesters(bachelorSemesters);
+    } else if (duration === 2) {
+      // Master – show semesters 1‑4 only
+      const masterSemesters = allSemesters.filter(s => {
+        const semNum = parseInt(s.semesterName.match(/\d+/)?.[0] || 0);
+        return semNum >= 1 && semNum <= 4;
+      });
+      setFilteredSemesters(masterSemesters);
+    } else {
+      setFilteredSemesters(allSemesters);
+    }
+  }, [formData.department, allSemesters, departments]);
+
+  // When department changes, reset semester if the current one is not allowed
+  useEffect(() => {
+    if (formData.semesterID && filteredSemesters.length > 0) {
+      const isAllowed = filteredSemesters.some(s => s._id === formData.semesterID);
+      if (!isAllowed) {
+        setFormData(prev => ({ ...prev, semesterID: '' }));
+      }
+    }
+  }, [filteredSemesters, formData.semesterID]);
 
   // Auto-update batch
   useEffect(() => {
@@ -123,8 +160,8 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
 
   // Auto-update currentYear based on semester
   useEffect(() => {
-    if (formData.semesterID && semesters.length) {
-      const semester = semesters.find(s => s._id === formData.semesterID);
+    if (formData.semesterID && allSemesters.length) {
+      const semester = allSemesters.find(s => s._id === formData.semesterID);
       if (semester?.semesterName) {
         const match = semester.semesterName.match(/\d+/);
         if (match) {
@@ -134,7 +171,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
         }
       }
     }
-  }, [formData.semesterID, semesters]);
+  }, [formData.semesterID, allSemesters]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -165,6 +202,15 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
       setError('Password must be at least 6 characters.');
       return false;
     }
+    // Optional: Validate semester belongs to the department's allowed list
+    const duration = getDurationFromDepartment(formData.department);
+    if (duration === 2) {
+      const semNum = parseInt(formData.semesterID && allSemesters.find(s => s._id === formData.semesterID)?.semesterName?.match(/\d+/)?.[0] || 0);
+      if (semNum > 4) {
+        setError('For Master programs, only semesters 1‑4 are allowed.');
+        return false;
+      }
+    }
     return true;
   };
 
@@ -191,7 +237,6 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
         if (mode === 'add') {
           setFormData(emptyForm);
         }
-        // Notify parent to switch back to list view
         if (onSuccess) onSuccess(response.data.data);
       } else {
         setError(response.data.message || 'Operation failed.');
@@ -664,7 +709,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Department <span className="text-red-500">*</span>
+              Course <span className="text-red-500">*</span>
             </label>
             <select
               name="department"
@@ -699,7 +744,6 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
               className="w-full p-2 border rounded bg-gray-100"
             />
           </div>
-          
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">
               Semester <span className="text-red-500">*</span>
@@ -712,7 +756,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
               required
             >
               <option value="">Select Semester</option>
-              {semesters.map(sem => (
+              {filteredSemesters.map(sem => (
                 <option key={sem._id} value={sem._id}>{sem.semesterName}</option>
               ))}
             </select>
@@ -734,43 +778,43 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
 
       {/* System Fields */}
       <section>
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">System & Security</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h2 className="text-xl font-semibold mb-4 border-b pb-2">System & Security</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              {mode === 'add' ? 'Password' : 'New Password (leave blank to keep current)'}
+              {mode === 'add' && <span className="text-red-500">*</span>}
+            </label>
             <div className="relative">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  {mode === 'add' ? 'Password' : 'New Password (leave blank to keep current)'}
-                  {mode === 'add' && <span className="text-red-500">*</span>}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded pr-10"
-                    required={mode === 'add'}
-                    minLength={mode === 'add' ? 6 : undefined}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-700"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-            <div className="flex items-center mt-6">
               <input
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
-                className="mr-2"
+                className="w-full p-2 border rounded pr-10"
+                required={mode === 'add'}
+                minLength={mode === 'add' ? 6 : undefined}
               />
-              <label className="text-gray-700 text-sm font-bold">Active</label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-700"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
+          <div className="flex items-center mt-6">
+            <input
+              type="checkbox"
+              name="isActive"
+              checked={formData.isActive}
+              onChange={handleChange}
+              className="mr-2"
+            />
+            <label className="text-gray-700 text-sm font-bold">Active</label>
+          </div>
+        </div>
       </section>
 
       {/* Submit Button */}

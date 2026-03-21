@@ -5,8 +5,7 @@ import StudentManagement from './pages/Admin/StudentManagement';
 import ProfessorManagement from './pages/Admin/ProfessorManagement';
 import HandleGallery from './pages/Admin/HandleGallery';
 import AdminHome from './pages/Admin/AdminHome';
-import StudentForm from './components/StudentForm';
-import StudentList from './components/StudentList';
+import Notification from './pages/Admin/NotificationManagement';
 
 function App() {
   return (
@@ -20,6 +19,7 @@ function App() {
         <Route path="studentmanagement" element={<StudentManagement />} />
         <Route path="professormanagement" element={<ProfessorManagement />} />
         <Route path="handlegallery" element={<HandleGallery />} />
+        <Route path="notification" element={<Notification />} />
       </Route>
 
       {/* Redirect unknown routes to login */}
