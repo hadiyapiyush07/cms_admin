@@ -82,6 +82,7 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
 
   const fullName = `${adminData.firstName || ''} ${adminData.lastName || ''}`.trim() || 'Admin';
   const initials = (adminData.firstName?.charAt(0) || '') + (adminData.lastName?.charAt(0) || '');
+  const adminId = adminData.id || adminData._id || adminData.adminId;
 
   return (
     <div className="p-6">
@@ -113,7 +114,7 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
               <div>
                 <p className="text-blue-200 text-sm">Admin ID</p>
-                <p className="font-semibold">{adminData.id?.slice(-6).toUpperCase() || 'N/A'}</p>
+                <p className="font-semibold">{adminId ? adminId.slice(-6).toUpperCase() : 'N/A'}</p>
               </div>
               <div>
                 <p className="text-blue-200 text-sm">Phone</p>

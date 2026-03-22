@@ -70,12 +70,26 @@ const AdminSignIn = () => {
 
       console.log("✅ Response received:", response.data);
 
+      // if (response.data.success) {
+      //   // Store token as 'authToken' for consistency across the app
+      //   localStorage.setItem('authToken', response.data.token);
+      //   localStorage.setItem('adminData', JSON.stringify(response.data.user));
+      //   navigate('/admin');
+      // } 
       if (response.data.success) {
-        // Store token as 'authToken' for consistency across the app
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('adminData', JSON.stringify(response.data.user));
-        navigate('/admin');
-      } else {
+          const token = response.data.token; // or response.data.data.token
+          // Store token for axios interceptor (key must be 'token')
+          localStorage.setItem('token', token);
+          // Also keep authToken for any existing code that relies on it
+          localStorage.setItem('authToken', token);
+          // Store admin data
+          localStorage.setItem('adminData', JSON.stringify(response.data.user));
+          // Set user role for frontend and backend middleware
+          localStorage.setItem('userRole', 'admin');
+          navigate('/admin')
+          // Optionally redirect or update state
+      }
+      else {
         setApiError(response.data.message || "Authentication failed");
       }
 

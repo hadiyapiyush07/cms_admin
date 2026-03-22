@@ -39,6 +39,10 @@ const AdminLayout = () => {
             <NavLink to="/admin/notification" className={navClass}>
               Notification
             </NavLink>
+
+            <NavLink to="/admin/subject" className={navClass}>
+              Manage Subject
+            </NavLink>
             
           </nav>
 
