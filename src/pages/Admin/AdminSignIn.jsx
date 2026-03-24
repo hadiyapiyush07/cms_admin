@@ -86,7 +86,7 @@ const AdminSignIn = () => {
           localStorage.setItem('adminData', JSON.stringify(response.data.user));
           // Set user role for frontend and backend middleware
           localStorage.setItem('userRole', 'admin');
-          navigate('/admin')
+          navigate('/admin');
           // Optionally redirect or update state
       }
       else {
