@@ -55,7 +55,7 @@ const HandleGallery = () => {
   // ---------- Upload a single file (helper) ----------
   const uploadFile = async (file) => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);   // 🔥 FIXED: changed from 'image' to 'file'
 
     const res = await fetch('http://localhost:5000/api/upload', {
       method: 'POST',
@@ -67,7 +67,7 @@ const HandleGallery = () => {
 
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.msg || 'Upload failed');
+      throw new Error(error.msg || error.message || 'Upload failed');
     }
 
     const data = await res.json();
@@ -117,7 +117,6 @@ const HandleGallery = () => {
       }
 
       setSuccessMessage('Event created successfully!');
-      // Auto‑dismiss after 3 seconds
       successTimeout.current = setTimeout(() => {
         setSuccessMessage('');
         successTimeout.current = null;
@@ -242,7 +241,6 @@ const HandleGallery = () => {
       }
 
       setSuccessMessage('Event updated successfully!');
-      // Auto‑dismiss after 3 seconds
       if (successTimeout.current) clearTimeout(successTimeout.current);
       successTimeout.current = setTimeout(() => {
         setSuccessMessage('');
@@ -270,9 +268,8 @@ const HandleGallery = () => {
       <h2 style={styles.heading}>Upload New Event</h2>
       {successMessage && <div style={styles.success}>{successMessage}</div>}
 
-      {/* New Event Form - no onSubmit to prevent page reload */}
+      {/* New Event Form */}
       <form style={styles.form}>
-        {/* Title */}
         <div style={styles.formGroup}>
           <label style={styles.label}>Event Title *</label>
           <input
@@ -285,7 +282,6 @@ const HandleGallery = () => {
           />
         </div>
 
-        {/* Date */}
         <div style={styles.formGroup}>
           <label style={styles.label}>Event Date *</label>
           <input
@@ -298,7 +294,6 @@ const HandleGallery = () => {
           />
         </div>
 
-        {/* Cover Image */}
         <div style={styles.formGroup}>
           <label style={styles.label}>Cover Image *</label>
           <input
@@ -311,7 +306,6 @@ const HandleGallery = () => {
           {coverFile && <p style={styles.fileName}>Selected: {coverFile.name}</p>}
         </div>
 
-        {/* Multiple Photos */}
         <div style={styles.formGroup}>
           <label style={styles.label}>Event Photos *</label>
           <input
@@ -394,7 +388,6 @@ const HandleGallery = () => {
               </button>
             </div>
             <form onSubmit={handleUpdate}>
-              {/* Title */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Event Title *</label>
                 <input
@@ -406,7 +399,6 @@ const HandleGallery = () => {
                 />
               </div>
 
-              {/* Date */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Event Date *</label>
                 <input
@@ -418,7 +410,6 @@ const HandleGallery = () => {
                 />
               </div>
 
-              {/* Cover Image */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Cover Image</label>
                 {editCoverPreview && (
@@ -437,7 +428,6 @@ const HandleGallery = () => {
                 <p style={styles.hint}>Leave empty to keep current cover</p>
               </div>
 
-              {/* Existing Photos */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Current Photos</label>
                 <div style={styles.photoGrid}>
@@ -457,7 +447,6 @@ const HandleGallery = () => {
                 </div>
               </div>
 
-              {/* Add New Photos */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Add New Photos</label>
                 <input
@@ -488,7 +477,6 @@ const HandleGallery = () => {
                 )}
               </div>
 
-              {/* Submit Buttons */}
               <div style={styles.modalActions}>
                 <button
                   type="submit"
@@ -516,7 +504,7 @@ const HandleGallery = () => {
   );
 };
 
-// ---------- Styles (unchanged) ----------
+// Styles (unchanged)
 const styles = {
   container: {
     maxWidth: '1000px',
