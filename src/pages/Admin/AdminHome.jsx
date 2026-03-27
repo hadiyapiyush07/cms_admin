@@ -58,6 +58,8 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
     navigate('/admin/signin');
   };
 
+    const navigateToChangePassword = () => navigate('/admin/change-password');
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -94,12 +96,20 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
           </h1>
           <p className="text-gray-600 mt-1">Administrator • Campus Flow</p>
         </div>
+        <div className='flex gap-2 justify-between items-center'>
+        <button
+          onClick={navigateToChangePassword}
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 cursor-pointer"
+        >
+          Change Password
+        </button>
         <button
           onClick={handleLogout}
-          className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition cursor-pointer"
+          className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 cursor-pointer"
         >
           Logout
         </button>
+        </div>
       </div>
 
       {/* Profile Card */}

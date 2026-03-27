@@ -43,6 +43,10 @@ const AdminLayout = () => {
             <NavLink to="/admin/subject" className={navClass}>
               Manage Subject
             </NavLink>
+
+            <NavLink to="/admin/fees" className={navClass}>
+              fees status
+            </NavLink>
             
           </nav>
 
