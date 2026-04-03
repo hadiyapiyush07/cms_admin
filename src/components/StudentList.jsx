@@ -25,7 +25,14 @@ const StudentList = ({ onEdit }) => {
   // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const limit = 10;
+  const limit = 60;
+
+  // Helper: extract semester number from semesterName
+  const getSemesterNumber = (semesterName) => {
+    if (!semesterName) return Infinity;
+    const match = semesterName.match(/\d+/);
+    return match ? parseInt(match[0]) : Infinity;
+  };
 
   // Fetch departments and semesters for dropdowns
   useEffect(() => {
@@ -65,7 +72,15 @@ const StudentList = ({ onEdit }) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.success) {
-          setStudents(response.data.data);
+          // Sort: first by semester (by extracting number), then by enrollment number
+          const sortedStudents = response.data.data.sort((a, b) => {
+            const semA = getSemesterNumber(a.semesterID?.semesterName);
+            const semB = getSemesterNumber(b.semesterID?.semesterName);
+            if (semA !== semB) return semA - semB;
+            // If same semester, sort by enrollment number
+            return a.enrollmentNum.localeCompare(b.enrollmentNum);
+          });
+          setStudents(sortedStudents);
           setTotalPages(response.data.pages);
         } else {
           setError('Failed to load students.');
@@ -107,7 +122,6 @@ const StudentList = ({ onEdit }) => {
         `http://localhost:5000/api/admin/students/${studentToDelete._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Remove from local list
       setStudents(prev => prev.filter(s => s._id !== studentToDelete._id));
       setShowDeleteModal(false);
       setStudentToDelete(null);
@@ -122,7 +136,7 @@ const StudentList = ({ onEdit }) => {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6">Manage Students</h2>
 
-      {/* Filters and Search */}
+      {/* Filters and Search (unchanged) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end">
         <div>
           <label className="block text-gray-700 text-sm font-bold mb-2">Department</label>
