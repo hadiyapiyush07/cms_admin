@@ -1,107 +1,72 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Pencil, Trash2 } from 'lucide-react';
+import { X, Pencil, Trash2, Image, Plus, CalendarDays } from 'lucide-react';
 
 const HandleGallery = () => {
-  // ---------- Form state for new event ----------
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [coverFile, setCoverFile] = useState(null);
+  const [title, setTitle]           = useState('');
+  const [date, setDate]             = useState('');
+  const [coverFile, setCoverFile]   = useState(null);
   const [photoFiles, setPhotoFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading]   = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const successTimeout              = useRef(null);
 
-  // ---------- Auto‑dismiss timeout ref ----------
-  const successTimeout = useRef(null);
+  const [events, setEvents]         = useState([]);
+  const [loading, setLoading]       = useState(true);
 
-  // ---------- Events list state ----------
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // ---------- Edit modal state ----------
-  const [editingEvent, setEditingEvent] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDate, setEditDate] = useState('');
-  const [editCoverFile, setEditCoverFile] = useState(null);
+  const [editingEvent, setEditingEvent]         = useState(null);
+  const [editTitle, setEditTitle]               = useState('');
+  const [editDate, setEditDate]                 = useState('');
+  const [editCoverFile, setEditCoverFile]       = useState(null);
   const [editCoverPreview, setEditCoverPreview] = useState(null);
-  const [editPhotos, setEditPhotos] = useState([]);
+  const [editPhotos, setEditPhotos]             = useState([]);
   const [editNewPhotoFiles, setEditNewPhotoFiles] = useState([]);
   const [editRemovedPhotos, setEditRemovedPhotos] = useState([]);
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating]                 = useState(false);
 
-  // Clear success timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (successTimeout.current) clearTimeout(successTimeout.current);
-    };
-  }, []);
-
-  // Fetch all events on mount
   useEffect(() => {
     fetchEvents();
+    return () => { if (successTimeout.current) clearTimeout(successTimeout.current); };
   }, []);
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/events');
+      const res  = await fetch('http://localhost:5000/api/events');
       const data = await res.json();
       setEvents(data);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Error fetching events:', error); }
+    finally { setLoading(false); }
   };
 
-  // ---------- Upload a single file (helper) ----------
   const uploadFile = async (file) => {
     const formData = new FormData();
-    formData.append('file', file);   // 🔥 FIXED: changed from 'image' to 'file'
-
+    formData.append('file', file);
     const res = await fetch('http://localhost:5000/api/upload', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
       body: formData,
     });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.msg || error.message || 'Upload failed');
-    }
-
-    const data = await res.json();
-    return data.url;
+    if (!res.ok) { const err = await res.json(); throw new Error(err.msg || 'Upload failed'); }
+    return (await res.json()).url;
   };
 
-  // ---------- Reset new event form ----------
   const resetForm = () => {
-    setTitle('');
-    setDate('');
-    setCoverFile(null);
-    setPhotoFiles([]);
-    document.querySelectorAll('input[type=file]').forEach(input => input.value = '');
+    setTitle(''); setDate(''); setCoverFile(null); setPhotoFiles([]);
+    document.querySelectorAll('input[type=file]').forEach(i => i.value = '');
   };
 
-  // ---------- Handle new event submission ----------
-  const handleSubmit = async () => {
-    // Clear any pending timeout
+  const showSuccess = (msg) => {
     if (successTimeout.current) clearTimeout(successTimeout.current);
-    setSuccessMessage('');
+    setSuccessMessage(msg);
+    successTimeout.current = setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleSubmit = async () => {
     setUploading(true);
-
     try {
-      // 1. Upload cover image
-      const coverUrl = await uploadFile(coverFile);
+      const coverUrl   = await uploadFile(coverFile);
+      const photoUrls  = [];
+      for (let file of photoFiles) photoUrls.push(await uploadFile(file));
 
-      // 2. Upload all event photos
-      const photoUrls = [];
-      for (let file of photoFiles) {
-        const url = await uploadFile(file);
-        photoUrls.push(url);
-      }
-
-      // 3. Save event metadata
       const eventRes = await fetch('http://localhost:5000/api/events', {
         method: 'POST',
         headers: {
@@ -110,54 +75,26 @@ const HandleGallery = () => {
         },
         body: JSON.stringify({ title, date, cover: coverUrl, photos: photoUrls })
       });
-
-      if (!eventRes.ok) {
-        const error = await eventRes.json();
-        throw new Error(error.msg || 'Failed to create event');
-      }
-
-      setSuccessMessage('Event created successfully!');
-      successTimeout.current = setTimeout(() => {
-        setSuccessMessage('');
-        successTimeout.current = null;
-      }, 3000);
-
+      if (!eventRes.ok) { const err = await eventRes.json(); throw new Error(err.msg || 'Failed'); }
+      showSuccess('Event created successfully!');
       resetForm();
       fetchEvents();
-    } catch (error) {
-      console.error(error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setUploading(false);
-    }
+    } catch (error) { alert(`Error: ${error.message}`); }
+    finally { setUploading(false); }
   };
 
-  // ---------- Delete event ----------
   const handleDelete = async (eventId) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
-
+    if (!window.confirm('Delete this event?')) return;
     try {
       const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.msg || 'Delete failed');
-      }
-
-      alert('Event deleted');
+      if (!res.ok) { const err = await res.json(); throw new Error(err.msg || 'Delete failed'); }
       fetchEvents();
-    } catch (error) {
-      console.error(error);
-      alert(`Error: ${error.message}`);
-    }
+    } catch (error) { alert(`Error: ${error.message}`); }
   };
 
-  // ---------- Open edit modal ----------
   const openEditModal = (event) => {
     setEditingEvent(event);
     setEditTitle(event.title);
@@ -169,57 +106,24 @@ const HandleGallery = () => {
     setEditRemovedPhotos([]);
   };
 
-  // ---------- Close edit modal ----------
-  const closeEditModal = () => {
-    setEditingEvent(null);
-  };
-
-  // ---------- Handle cover change in edit modal ----------
   const handleEditCoverChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setEditCoverFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setEditCoverPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    setEditCoverFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setEditCoverPreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
-  // ---------- Handle new photo files in edit modal ----------
-  const handleEditNewPhotosChange = (e) => {
-    const newFiles = Array.from(e.target.files);
-    setEditNewPhotoFiles(prev => [...prev, ...newFiles]);
-  };
-
-  // ---------- Remove an existing photo ----------
-  const removeExistingPhoto = (photoUrl) => {
-    setEditPhotos(prev => prev.filter(url => url !== photoUrl));
-    setEditRemovedPhotos(prev => [...prev, photoUrl]);
-  };
-
-  // ---------- Remove a newly added photo file ----------
-  const removeNewPhotoFile = (index) => {
-    setEditNewPhotoFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // ---------- Submit update ----------
   const handleUpdate = async (e) => {
     e.preventDefault();
     setUpdating(true);
-
     try {
       let coverUrl = editCoverPreview;
-      if (editCoverFile) {
-        coverUrl = await uploadFile(editCoverFile);
-      }
+      if (editCoverFile) coverUrl = await uploadFile(editCoverFile);
 
       const newPhotoUrls = [];
-      for (let file of editNewPhotoFiles) {
-        const url = await uploadFile(file);
-        newPhotoUrls.push(url);
-      }
-
-      const finalPhotos = [...editPhotos, ...newPhotoUrls];
+      for (let file of editNewPhotoFiles) newPhotoUrls.push(await uploadFile(file));
 
       const res = await fetch(`http://localhost:5000/api/events/${editingEvent._id}`, {
         method: 'PUT',
@@ -228,272 +132,237 @@ const HandleGallery = () => {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
-          title: editTitle,
-          date: editDate,
-          cover: coverUrl,
-          photos: finalPhotos
+          title: editTitle, date: editDate,
+          cover: coverUrl, photos: [...editPhotos, ...newPhotoUrls]
         })
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.msg || 'Update failed');
-      }
-
-      setSuccessMessage('Event updated successfully!');
-      if (successTimeout.current) clearTimeout(successTimeout.current);
-      successTimeout.current = setTimeout(() => {
-        setSuccessMessage('');
-        successTimeout.current = null;
-      }, 3000);
-
+      if (!res.ok) { const err = await res.json(); throw new Error(err.msg || 'Update failed'); }
+      showSuccess('Event updated successfully!');
       fetchEvents();
-      closeEditModal();
-    } catch (error) {
-      console.error(error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setUpdating(false);
-    }
+      setEditingEvent(null);
+    } catch (error) { alert(`Error: ${error.message}`); }
+    finally { setUpdating(false); }
   };
 
-  // ---------- Photo file input for new event ----------
-  const handlePhotosChange = (e) => {
-    const newFiles = Array.from(e.target.files);
-    setPhotoFiles(prev => [...prev, ...newFiles]);
-  };
+  const inputClass = "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition";
+  const fileClass  = "w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-xs file:font-semibold cursor-pointer";
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.heading}>Upload New Event</h2>
-      {successMessage && <div style={styles.success}>{successMessage}</div>}
+    <div className="space-y-8 max-w-5xl mx-auto">
 
-      {/* New Event Form */}
-      <form style={styles.form}>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Event Title *</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            style={styles.input}
-            placeholder="e.g. Republic Day Celebration"
-          />
+      {/* ── Header ── */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Image size={20} className="text-orange-600" />
         </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Event Date *</label>
-          <input
-            type="text"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            style={styles.input}
-            placeholder="e.g. 26 Jan 2026"
-          />
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800">Gallery Manager</h1>
+          <p className="text-slate-500 text-xs mt-0.5">Upload and manage college event photos</p>
         </div>
+      </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Cover Image *</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setCoverFile(e.target.files[0])}
-            required
-            style={styles.fileInput}
-          />
-          {coverFile && <p style={styles.fileName}>Selected: {coverFile.name}</p>}
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Event Photos *</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handlePhotosChange}
-            style={styles.fileInput}
-          />
-          {photoFiles.length > 0 && (
-            <div style={styles.fileList}>
-              <p>Selected files:</p>
-              <ul>
-                {photoFiles.map((file, idx) => (
-                  <li key={idx}>{file.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={uploading}
-          style={{
-            ...styles.button,
-            ...(uploading ? styles.buttonDisabled : {}),
-          }}
-        >
-          {uploading ? 'Uploading...' : 'Create Event'}
-        </button>
-      </form>
-
-      <hr style={{ margin: '2rem 0' }} />
-
-      {/* Events List */}
-      <h2 style={styles.heading}>Existing Events</h2>
-      {loading ? (
-        <p>Loading events...</p>
-      ) : events.length === 0 ? (
-        <p>No events found.</p>
-      ) : (
-        <div style={styles.eventGrid}>
-          {events.map((event) => (
-            <div key={event._id} style={styles.eventCard}>
-              <img src={event.cover} alt={event.title} style={styles.eventCover} />
-              <div style={styles.eventInfo}>
-                <h3>{event.title}</h3>
-                <p>{event.date}</p>
-                <p>{event.photos?.length || 0} photos</p>
-                <div style={styles.buttonGroup}>
-                  <button
-                    onClick={() => openEditModal(event)}
-                    style={styles.editButton}
-                  >
-                    <Pencil size={16} /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(event._id)}
-                    style={styles.deleteButton}
-                  >
-                    <Trash2 size={16} /> Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* ── Success banner ── */}
+      {successMessage && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+          <span className="w-2 h-2 bg-emerald-500 rounded-full" /> {successMessage}
         </div>
       )}
 
-      {/* Edit Modal */}
-      {editingEvent && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div style={styles.modalHeader}>
-              <h2>Edit Event</h2>
-              <button onClick={closeEditModal} style={styles.closeButton}>
-                <X size={24} />
-              </button>
+      {/* ── Upload New Event Form ── */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 md:p-6">
+        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-5 flex items-center gap-2">
+          <Plus size={15} className="text-blue-600" /> Upload New Event
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Title <span className="text-red-500">*</span></label>
+            <input
+              type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+              className={inputClass} placeholder="e.g. Republic Day Celebration"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Date <span className="text-red-500">*</span></label>
+            <input
+              type="text" value={date} onChange={(e) => setDate(e.target.value)}
+              className={inputClass} placeholder="e.g. 26 Jan 2026"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Cover Image <span className="text-red-500">*</span></label>
+            <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files[0])} className={fileClass} />
+            {coverFile && <p className="text-xs text-slate-500 mt-1.5">✓ {coverFile.name}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Photos <span className="text-red-500">*</span></label>
+            <input type="file" accept="image/*" multiple onChange={(e) => setPhotoFiles(prev => [...prev, ...Array.from(e.target.files)])} className={fileClass} />
+            {photoFiles.length > 0 && (
+              <p className="text-xs text-slate-500 mt-1.5">✓ {photoFiles.length} file{photoFiles.length > 1 ? 's' : ''} selected</p>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button" onClick={handleSubmit} disabled={uploading || !title || !date || !coverFile}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition"
+        >
+          {uploading
+            ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Uploading...</>
+            : <><Plus size={15} /> Create Event</>}
+        </button>
+      </div>
+
+      {/* ── Existing Events ── */}
+      <div>
+        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Existing Events</h2>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 gap-2">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-slate-500 text-sm">Loading events...</span>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-16 text-center">
+            <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Image size={24} className="text-slate-400" />
             </div>
-            <form onSubmit={handleUpdate}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Event Title *</label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  required
-                  style={styles.input}
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Event Date *</label>
-                <input
-                  type="text"
-                  value={editDate}
-                  onChange={(e) => setEditDate(e.target.value)}
-                  required
-                  style={styles.input}
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Cover Image</label>
-                {editCoverPreview && (
+            <p className="text-slate-500 font-medium text-sm">No events yet</p>
+            <p className="text-slate-400 text-xs mt-1">Create your first event above</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {events.map((event) => (
+              <div key={event._id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition group">
+                <div className="relative overflow-hidden">
                   <img
-                    src={editCoverPreview}
-                    alt="Cover preview"
-                    style={styles.previewImage}
+                    src={event.cover} alt={event.title}
+                    className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleEditCoverChange}
-                  style={styles.fileInput}
-                />
-                <p style={styles.hint}>Leave empty to keep current cover</p>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Current Photos</label>
-                <div style={styles.photoGrid}>
-                  {editPhotos.map((url, idx) => (
-                    <div key={idx} style={styles.photoItem}>
-                      <img src={url} alt="Event" style={styles.thumb} />
-                      <button
-                        type="button"
-                        onClick={() => removeExistingPhoto(url)}
-                        style={styles.removePhotoButton}
-                        title="Remove"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white text-xs font-medium">
+                    <CalendarDays size={12} /> {event.date}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-slate-800 text-sm mb-1 truncate">{event.title}</h3>
+                  <p className="text-slate-400 text-xs mb-3">{event.photos?.length || 0} photos</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditModal(event)}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-semibold transition active:scale-95"
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(event._id)}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-2 rounded-xl text-xs font-semibold transition active:scale-95"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Add New Photos</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleEditNewPhotosChange}
-                  style={styles.fileInput}
-                />
-                {editNewPhotoFiles.length > 0 && (
-                  <div style={styles.newPhotoList}>
-                    <p>New files to upload:</p>
-                    <ul>
-                      {editNewPhotoFiles.map((file, idx) => (
-                        <li key={idx}>
-                          {file.name}
+      {/* ── Edit Modal ── */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-xl sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl z-10">
+              <h2 className="text-base font-bold text-slate-800">Edit Event</h2>
+              <button
+                onClick={() => setEditingEvent(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Title <span className="text-red-500">*</span></label>
+                <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required className={inputClass} />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Date <span className="text-red-500">*</span></label>
+                <input type="text" value={editDate} onChange={(e) => setEditDate(e.target.value)} required className={inputClass} />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Cover Image</label>
+                {editCoverPreview && (
+                  <img src={editCoverPreview} alt="Cover preview" className="w-24 h-18 object-cover rounded-lg mb-2 border border-slate-200" />
+                )}
+                <input type="file" accept="image/*" onChange={handleEditCoverChange} className={fileClass} />
+                <p className="text-xs text-slate-400 mt-1">Leave empty to keep current cover</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Current Photos</label>
+                {editPhotos.length === 0
+                  ? <p className="text-xs text-slate-400">No photos remaining</p>
+                  : (
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                      {editPhotos.map((url, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={url} alt="Event" className="w-full h-16 object-cover rounded-lg border border-slate-200" />
                           <button
                             type="button"
-                            onClick={() => removeNewPhotoFile(idx)}
-                            style={styles.removeSmall}
+                            onClick={() => {
+                              setEditPhotos(prev => prev.filter(u => u !== url));
+                              setEditRemovedPhotos(prev => [...prev, url]);
+                            }}
+                            className="absolute top-0.5 right-0.5 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
                           >
-                            <X size={14} />
+                            <X size={10} />
                           </button>
-                        </li>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
+                  )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Add New Photos</label>
+                <input type="file" accept="image/*" multiple onChange={(e) => setEditNewPhotoFiles(prev => [...prev, ...Array.from(e.target.files)])} className={fileClass} />
+                {editNewPhotoFiles.length > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    {editNewPhotoFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg">
+                        <span className="text-xs text-slate-600 truncate max-w-[80%]">{file.name}</span>
+                        <button type="button" onClick={() => setEditNewPhotoFiles(prev => prev.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 transition">
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <div style={styles.modalActions}>
+              <div className="flex gap-2 pt-2">
                 <button
-                  type="submit"
-                  disabled={updating}
-                  style={{
-                    ...styles.button,
-                    ...(updating ? styles.buttonDisabled : {}),
-                  }}
-                >
-                  {updating ? 'Updating...' : 'Update Event'}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  style={styles.cancelButton}
+                  type="button" onClick={() => setEditingEvent(null)}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit" disabled={updating}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50"
+                >
+                  {updating
+                    ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Updating...</>
+                    : 'Update Event'}
                 </button>
               </div>
             </form>
@@ -502,233 +371,6 @@ const HandleGallery = () => {
       )}
     </div>
   );
-};
-
-// Styles (unchanged)
-const styles = {
-  container: {
-    maxWidth: '1000px',
-    margin: '2rem auto',
-    padding: '2rem',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-  },
-  heading: {
-    textAlign: 'center',
-    marginBottom: '1.5rem',
-    color: '#333',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  formGroup: {
-    marginBottom: '1.5rem',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '0.5rem',
-    fontWeight: 'bold',
-    color: '#555',
-  },
-  input: {
-    width: '100%',
-    padding: '0.75rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '1rem',
-  },
-  fileInput: {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    backgroundColor: '#fff',
-    cursor: 'pointer',
-  },
-  fileName: {
-    marginTop: '0.5rem',
-    fontSize: '0.9rem',
-    color: '#666',
-  },
-  fileList: {
-    marginTop: '0.5rem',
-    fontSize: '0.9rem',
-    color: '#666',
-  },
-  button: {
-    padding: '0.75rem',
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  },
-  buttonDisabled: {
-    backgroundColor: '#6c757d',
-    cursor: 'not-allowed',
-  },
-  success: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-    padding: '0.75rem',
-    borderRadius: '4px',
-    marginBottom: '1rem',
-    textAlign: 'center',
-  },
-  eventGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-    gap: '1rem',
-    marginTop: '1rem',
-  },
-  eventCard: {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-  },
-  eventCover: {
-    width: '100%',
-    height: '150px',
-    objectFit: 'cover',
-  },
-  eventInfo: {
-    padding: '1rem',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '0.5rem',
-    marginTop: '0.5rem',
-  },
-  editButton: {
-    backgroundColor: '#28a745',
-    color: '#fff',
-    border: 'none',
-    padding: '0.5rem 0.75rem',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    fontSize: '0.9rem',
-  },
-  deleteButton: {
-    backgroundColor: '#dc3545',
-    color: '#fff',
-    border: 'none',
-    padding: '0.5rem 0.75rem',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    fontSize: '0.9rem',
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: '2rem',
-    borderRadius: '8px',
-    maxWidth: '600px',
-    width: '90%',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-  },
-  modalHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem',
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '1.5rem',
-    cursor: 'pointer',
-  },
-  previewImage: {
-    width: '100px',
-    height: '75px',
-    objectFit: 'cover',
-    marginBottom: '0.5rem',
-    borderRadius: '4px',
-  },
-  photoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-    gap: '0.5rem',
-    marginTop: '0.5rem',
-  },
-  photoItem: {
-    position: 'relative',
-  },
-  thumb: {
-    width: '100%',
-    height: '80px',
-    objectFit: 'cover',
-    borderRadius: '4px',
-  },
-  removePhotoButton: {
-    position: 'absolute',
-    top: '2px',
-    right: '2px',
-    backgroundColor: 'rgba(255,0,0,0.7)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '50%',
-    width: '20px',
-    height: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-  },
-  newPhotoList: {
-    marginTop: '0.5rem',
-    fontSize: '0.9rem',
-  },
-  removeSmall: {
-    background: 'none',
-    border: 'none',
-    color: 'red',
-    marginLeft: '0.5rem',
-    cursor: 'pointer',
-    verticalAlign: 'middle',
-  },
-  modalActions: {
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'flex-end',
-    marginTop: '1.5rem',
-  },
-  cancelButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#6c757d',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  hint: {
-    fontSize: '0.85rem',
-    color: '#888',
-    marginTop: '0.25rem',
-  },
 };
 
 export default HandleGallery;

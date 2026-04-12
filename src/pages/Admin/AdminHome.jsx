@@ -1,31 +1,59 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {
+  Users, GraduationCap, Image, LogOut,
+  KeyRound, Mail, Phone, Calendar, Clock,
+  ShieldCheck, BadgeCheck
+} from 'lucide-react';
 
-const AdminHome = () => {   // Capitalized component name (optional but conventional)
+// ── Helper Components (defined outside to avoid re-mount) ──────────────────
+
+const InfoItem = ({ label, value, icon: Icon }) => (
+  <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-center gap-2 text-slate-500 text-sm">
+      {Icon && <Icon size={14} className="text-slate-400" />}
+      <span>{label}</span>
+    </div>
+    <span className="font-medium text-slate-800 text-sm bg-slate-50 px-3 py-1 rounded-lg max-w-[60%] truncate text-right">
+      {value || 'N/A'}
+    </span>
+  </div>
+);
+
+const ActionCard = ({ title, description, icon: Icon, gradient, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`${gradient} text-white p-5 md:p-6 rounded-2xl shadow-lg hover:shadow-xl
+      transform hover:-translate-y-1 transition-all duration-300 cursor-pointer
+      active:scale-95`}
+  >
+    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+      <Icon size={24} className="text-white" />
+    </div>
+    <h3 className="text-lg font-bold mb-1">{title}</h3>
+    <p className="text-white/80 text-sm leading-relaxed">{description}</p>
+  </div>
+);
+
+// ── Main Component ─────────────────────────────────────────────────────────
+
+const AdminHome = () => {
   const [adminData, setAdminData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]     = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadAdminData();
-  }, []);
+  useEffect(() => { loadAdminData(); }, []);
 
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      
-      // Try to get data from localStorage first
       const storedData = localStorage.getItem('adminData');
-      if (storedData) {
-        setAdminData(JSON.parse(storedData));
-      }
+      if (storedData) setAdminData(JSON.parse(storedData));
 
-      // Use the correct token key: 'authToken'
-      const token = localStorage.getItem('authToken');   
+      const token = localStorage.getItem('authToken');
       if (token) {
         try {
-          // Optional: fetch fresh data – adjust endpoint if needed
           const response = await axios.get('http://localhost:5000/api/admin/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -37,7 +65,7 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
         } catch (error) {
           console.error('Failed to fetch fresh admin data', error);
           if (error.response?.status === 401) {
-            localStorage.removeItem('authToken');       
+            localStorage.removeItem('authToken');
             localStorage.removeItem('adminData');
             navigate('/admin/signin');
           }
@@ -53,151 +81,172 @@ const AdminHome = () => {   // Capitalized component name (optional but conventi
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');   
+    localStorage.removeItem('authToken');
     localStorage.removeItem('adminData');
     navigate('/admin/signin');
   };
 
-    const navigateToChangePassword = () => navigate('/admin/change-password');
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+  // ── Loading ──
+  if (loading) return (
+    <div className="flex justify-center items-center h-64">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-slate-500 text-sm">Loading profile...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (!adminData) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">Session expired. Please login again.</p>
-        <button
-          onClick={() => navigate('/admin/signin')}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Go to Login
-        </button>
-      </div>
-    );
-  }
+  // ── No data ──
+  if (!adminData) return (
+    <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <p className="text-red-500 font-medium">Session expired. Please login again.</p>
+      <button
+        onClick={() => navigate('/admin/signin')}
+        className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition text-sm font-semibold"
+      >
+        Go to Login
+      </button>
+    </div>
+  );
 
   const fullName = `${adminData.firstName || ''} ${adminData.lastName || ''}`.trim() || 'Admin';
   const initials = (adminData.firstName?.charAt(0) || '') + (adminData.lastName?.charAt(0) || '');
-  const adminId = adminData.id || adminData._id || adminData.adminId;
+  const adminId  = adminData.id || adminData._id || adminData.adminId;
 
   return (
-    <div className="p-6">
-      {/* Header with logout button */}
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6 max-w-6xl mx-auto">
+
+      {/* ── Top Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Welcome back, {fullName}
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 leading-tight">
+            Welcome back, <span className="text-blue-600">{adminData.firstName || 'Admin'}</span> 👋
           </h1>
-          <p className="text-gray-600 mt-1">Administrator • Campus Flow</p>
+          <p className="text-slate-500 text-sm mt-1">Administrator · Campus Flow</p>
         </div>
-        <div className='flex gap-2 justify-between items-center'>
-        <button
-          onClick={navigateToChangePassword}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 cursor-pointer"
-        >
-          Change Password
-        </button>
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 cursor-pointer"
-        >
-          Logout
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => navigate('/admin/change-password')}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95"
+          >
+            <KeyRound size={15} />
+            <span className="hidden xs:inline">Change Password</span>
+            <span className="xs:hidden">Password</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95"
+          >
+            <LogOut size={15} />
+            Logout
+          </button>
         </div>
       </div>
 
-      {/* Profile Card */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-8 rounded-xl shadow-lg mb-8">
-        <div className="flex items-center space-x-6">
-          <div className="bg-white text-blue-600 rounded-full w-20 h-20 flex items-center justify-center text-3xl font-bold">
-            {initials || fullName.charAt(0)}
-          </div>
-          <div className="flex-1">
-            <h2 className="text-3xl font-bold">{fullName}</h2>
-            <p className="text-blue-100 mt-1">{adminData.email}</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-              <div>
-                <p className="text-blue-200 text-sm">Admin ID</p>
-                <p className="font-semibold">{adminId ? adminId.slice(-6).toUpperCase() : 'N/A'}</p>
+      {/* ── Profile Card ── */}
+      <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-blue-950 text-white rounded-2xl shadow-xl overflow-hidden">
+        {/* Top decorative strip */}
+        <div className="h-1.5 bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300" />
+
+        <div className="p-6 md:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div className="w-20 h-20 md:w-24 md:h-24 bg-white text-blue-700 rounded-2xl flex items-center justify-center text-3xl md:text-4xl font-bold shadow-lg">
+                {initials || fullName.charAt(0)}
               </div>
-              <div>
-                <p className="text-blue-200 text-sm">Phone</p>
-                <p className="font-semibold">{adminData.phone || 'Not provided'}</p>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-400 rounded-full border-2 border-blue-800 flex items-center justify-center">
+                <BadgeCheck size={12} className="text-white" />
               </div>
-              <div>
-                <p className="text-blue-200 text-sm">Status</p>
-                <p className="font-semibold">{adminData.isActive ? 'Active' : 'Inactive'}</p>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-2xl md:text-3xl font-bold truncate">{fullName}</h2>
+              <p className="text-blue-200 text-sm mt-0.5 flex items-center gap-1.5">
+                <Mail size={13} /> {adminData.email}
+              </p>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5">
+                <div className="bg-white/10 backdrop-blur rounded-xl px-3 py-2.5">
+                  <p className="text-blue-200 text-xs mb-0.5">Admin ID</p>
+                  <p className="font-bold text-sm tracking-wide">
+                    {adminId ? adminId.toString().slice(-6).toUpperCase() : 'N/A'}
+                  </p>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-xl px-3 py-2.5">
+                  <p className="text-blue-200 text-xs mb-0.5">Phone</p>
+                  <p className="font-bold text-sm">{adminData.phone || 'Not set'}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur rounded-xl px-3 py-2.5 col-span-2 sm:col-span-1">
+                  <p className="text-blue-200 text-xs mb-0.5">Status</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                    <p className="font-bold text-sm">{adminData.isActive ? 'Active' : 'Inactive'}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-        <ActionCard
-          title="Student Management"
-          description="Add, edit, or remove students"
-          icon="👥"
-          color="from-green-500 to-green-700"
-          onClick={() => navigate('/admin/studentmanagement')}
-        />
-        <ActionCard
-          title="Professor Management"
-          description="Manage faculty accounts"
-          icon="👨‍🏫"
-          color="from-purple-500 to-purple-700"
-          onClick={() => navigate('/admin/professormanagement')}
-        />
-        <ActionCard
-          title="Gallery"
-          description="Upload and manage gallery images"
-          icon="🖼️"
-          color="from-orange-500 to-orange-700"
-          onClick={() => navigate('/admin/handlegallery')}
-        />
-      </div>
-
-      {/* Admin Details - Full Width */}
-      <div className="bg-white p-6 rounded-xl shadow-md">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">📋 Admin Details</h3>
-        <div className="space-y-3">
-          <InfoItem label="Name" value={fullName} />
-          <InfoItem label="Email" value={adminData.email} />
-          <InfoItem label="Phone" value={adminData.phone || 'Not provided'} />
-          <InfoItem label="Last Login" value={adminData.lastLogin ? new Date(adminData.lastLogin).toLocaleString() : 'Never'} />
-          <InfoItem label="Account Created" value={adminData.createdAt ? new Date(adminData.createdAt).toLocaleDateString() : 'N/A'} />
+      {/* ── Quick Action Cards ── */}
+      <div>
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Quick Actions</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ActionCard
+            title="Student Management"
+            description="Add, edit, or remove student accounts"
+            icon={Users}
+            gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
+            onClick={() => navigate('/admin/studentmanagement')}
+          />
+          <ActionCard
+            title="Professor Management"
+            description="Manage faculty and professor accounts"
+            icon={GraduationCap}
+            gradient="bg-gradient-to-br from-purple-500 to-purple-700"
+            onClick={() => navigate('/admin/professormanagement')}
+          />
+          <ActionCard
+            title="Gallery"
+            description="Upload and manage college gallery images"
+            icon={Image}
+            gradient="bg-gradient-to-br from-orange-500 to-orange-700"
+            onClick={() => navigate('/admin/handlegallery')}
+          />
         </div>
       </div>
+
+      {/* ── Admin Details ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <ShieldCheck size={18} className="text-blue-600" />
+          <h3 className="text-base font-semibold text-slate-800">Admin Details</h3>
+        </div>
+        <div className="px-6 py-2">
+          <InfoItem icon={Users}    label="Full Name"       value={fullName} />
+          <InfoItem icon={Mail}     label="Email"           value={adminData.email} />
+          <InfoItem icon={Phone}    label="Phone"           value={adminData.phone || 'Not provided'} />
+          <InfoItem icon={Clock}    label="Last Login"
+            value={adminData.lastLogin
+              ? new Date(adminData.lastLogin).toLocaleString('en-IN', {
+                  dateStyle: 'medium', timeStyle: 'short'
+                })
+              : 'Never'} />
+          <InfoItem icon={Calendar} label="Account Created"
+            value={adminData.createdAt
+              ? new Date(adminData.createdAt).toLocaleDateString('en-IN', {
+                  dateStyle: 'long'
+                })
+              : 'N/A'} />
+        </div>
+      </div>
+
     </div>
   );
 };
-
-// Helper Components
-const InfoItem = ({ label, value }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-gray-500 text-sm">{label}:</span>
-    <span className="font-medium text-gray-800 bg-gray-50 px-3 py-1 rounded-lg">
-      {value || 'N/A'}
-    </span>
-  </div>
-);
-
-const ActionCard = ({ title, description, icon, color, onClick }) => (
-  <div
-    onClick={onClick}
-    className={`bg-gradient-to-r ${color} text-white p-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer`}
-  >
-    <div className="text-4xl mb-3">{icon}</div>
-    <h3 className="text-xl font-bold mb-2">{title}</h3>
-    <p className="text-white text-opacity-90 text-sm">{description}</p>
-  </div>
-);
 
 export default AdminHome;

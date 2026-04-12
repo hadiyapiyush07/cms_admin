@@ -1,185 +1,170 @@
 // src/cms_admin/components/StudentViewModal.jsx
-import { Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useEffect } from 'react';
+import { X } from 'lucide-react';
+
+const formatDate = (date) => {
+  if (!date) return 'N/A';
+  return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+};
+
+// ── Reusable field row ──────────────────────────────────────────────────────
+const Field = ({ label, value }) => (
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 py-1.5 border-b border-slate-100 last:border-0">
+    <span className="text-xs text-slate-500 font-medium">{label}</span>
+    <span className="text-sm font-semibold text-slate-800 sm:text-right">{value || 'N/A'}</span>
+  </div>
+);
+
+// ── Section card ───────────────────────────────────────────────────────────
+const Section = ({ title, color = 'blue', children }) => (
+  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+    <h4 className={`text-xs font-bold uppercase tracking-wide mb-3 text-${color}-700`}>{title}</h4>
+    {children}
+  </div>
+);
 
 const StudentViewModal = ({ student, onClose }) => {
-  // Format date for display
-  const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   return (
-    <Transition appear show={true} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="bg-white w-full sm:max-w-4xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh]">
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
-                <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title as="h3" className="text-lg font-medium text-gray-900">
-                    Student Details
-                  </Dialog.Title>
-                  <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <XMarkIcon className="h-6 w-6" />
-                  </button>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
+          <div>
+            <h3 className="text-base font-bold text-slate-800">Student Details</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{student.name} · {student.enrollmentNum}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Core Identification — full width */}
+            <div className="md:col-span-2">
+              <Section title="Core Identification">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                  <Field label="Enrollment No." value={student.enrollmentNum} />
+                  <Field label="Aadhar No." value={student.aadharNumber} />
                 </div>
+              </Section>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[70vh] p-2">
-                  {/* Core Identification */}
-                  <div className="col-span-2 bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">Core Identification</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><span className="text-gray-600">Enrollment No.:</span> {student.enrollmentNum}</div>
-                      <div><span className="text-gray-600">Aadhar No.:</span> {student.aadharNumber || 'N/A'}</div>
-                    </div>
-                  </div>
+            {/* Personal */}
+            <Section title="Personal Details">
+              <Field label="Name"        value={student.name} />
+              <Field label="DOB"         value={formatDate(student.dob)} />
+              <Field label="Gender"      value={student.gender} />
+              <Field label="Blood Group" value={student.bloodGroup} />
+              <Field label="Nationality" value={student.nationality} />
+              <Field label="Religion"    value={student.religion} />
+            </Section>
 
-                  {/* Personal Details */}
-                  <div className="bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">Personal Details</h4>
-                    <div className="space-y-1">
-                      <div><span className="text-gray-600">Name:</span> {student.name}</div>
-                      <div><span className="text-gray-600">DOB:</span> {formatDate(student.dob)}</div>
-                      <div><span className="text-gray-600">Gender:</span> {student.gender}</div>
-                      <div><span className="text-gray-600">Blood Group:</span> {student.bloodGroup || 'N/A'}</div>
-                      <div><span className="text-gray-600">Nationality:</span> {student.nationality}</div>
-                      <div><span className="text-gray-600">Religion:</span> {student.religion || 'N/A'}</div>
-                    </div>
-                  </div>
+            {/* Category */}
+            <Section title="Reservation / Category">
+              <Field label="Category" value={student.category} />
+              <Field label="Caste"    value={student.caste} />
+              <Field label="Subcaste" value={student.subcaste} />
+            </Section>
 
-                  {/* Reservation / Category */}
-                  <div className="bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">Reservation / Category</h4>
-                    <div className="space-y-1">
-                      <div><span className="text-gray-600">Category:</span> {student.category}</div>
-                      <div><span className="text-gray-600">Caste:</span> {student.caste || 'N/A'}</div>
-                      <div><span className="text-gray-600">Subcaste:</span> {student.subcaste || 'N/A'}</div>
-                    </div>
-                  </div>
-
-                  {/* Contact & Address */}
-                  <div className="col-span-2 bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">Contact & Address</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><span className="text-gray-600">Email:</span> {student.email}</div>
-                      <div><span className="text-gray-600">Contact:</span> {student.contactNumber}</div>
-                      <div><span className="text-gray-600">Alternate:</span> {student.alternateContact || 'N/A'}</div>
-                      <div><span className="text-gray-600">Address:</span> {student.address || 'N/A'}</div>
-                      <div><span className="text-gray-600">City:</span> {student.city || 'N/A'}</div>
-                      <div><span className="text-gray-600">State:</span> {student.state || 'N/A'}</div>
-                      <div><span className="text-gray-600">Pincode:</span> {student.pincode || 'N/A'}</div>
-                    </div>
-                  </div>
-
-                  {/* Parent / Guardian */}
-                  <div className="col-span-2 bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">Parent / Guardian</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div><span className="text-gray-600">Father:</span> {student.fatherName || 'N/A'}</div>
-                      <div><span className="text-gray-600">Mother:</span> {student.motherName || 'N/A'}</div>
-                      <div><span className="text-gray-600">Guardian:</span> {student.guardianName || 'N/A'}</div>
-                      <div><span className="text-gray-600">Parent Contact:</span> {student.parentContact || 'N/A'}</div>
-                      <div><span className="text-gray-600">Parent Email:</span> {student.parentEmail || 'N/A'}</div>
-                      <div><span className="text-gray-600">Occupation:</span> {student.parentOccupation || 'N/A'}</div>
-                    </div>
-                  </div>
-
-                  {/* 10th Qualification */}
-                  <div className="bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">10th Qualification</h4>
-                    <div className="space-y-1">
-                      <div><span className="text-gray-600">Board:</span> {student.tenthBoard || 'N/A'}</div>
-                      <div><span className="text-gray-600">Admit No.:</span> {student.tenthAdmitNumber || 'N/A'}</div>
-                      <div><span className="text-gray-600">Passing Year:</span> {student.tenthPassingYear || 'N/A'}</div>
-                      <div><span className="text-gray-600">Marks Obtained:</span> {student.tenthMarksObtained || 'N/A'} / 600</div>
-                      {student.tenthMarksObtained && (
-                        <div><span className="text-gray-600">Percentage:</span> {((student.tenthMarksObtained / 600) * 100).toFixed(2)}%</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 12th Qualification */}
-                  <div className="bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">12th Qualification</h4>
-                    <div className="space-y-1">
-                      <div><span className="text-gray-600">Board:</span> {student.twelfthBoard || 'N/A'}</div>
-                      <div><span className="text-gray-600">Admit No.:</span> {student.twelfthAdmitNumber || 'N/A'}</div>
-                      <div><span className="text-gray-600">Passing Year:</span> {student.twelfthPassingYear || 'N/A'}</div>
-                      <div><span className="text-gray-600">Marks Obtained:</span> {student.twelfthMarksObtained || 'N/A'} / {student.twelfthTotalMarks || 'N/A'}</div>
-                      {student.twelfthMarksObtained && student.twelfthTotalMarks && (
-                        <div><span className="text-gray-600">Percentage:</span> {((student.twelfthMarksObtained / student.twelfthTotalMarks) * 100).toFixed(2)}%</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Academic Details */}
-                  <div className="col-span-2 bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">Academic Details</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div><span className="text-gray-600">Admission Year:</span> {student.admissionYear || 'N/A'}</div>
-                      <div><span className="text-gray-600">Batch:</span> {student.batch || 'N/A'}</div>
-                      <div><span className="text-gray-600">Department:</span> {student.department?.name || 'N/A'}</div>
-                      <div><span className="text-gray-600">Semester:</span> {student.semesterID?.semesterName || 'N/A'}</div>
-                      <div><span className="text-gray-600">Current Year:</span> {student.currentYear || 'N/A'}</div>
-                    </div>
-                  </div>
-
-                  {/* System Fields */}
-                  <div className="col-span-2 bg-gray-50 p-4 rounded">
-                    <h4 className="font-semibold text-blue-900 mb-2">System & Status</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><span className="text-gray-600">Status:</span> {student.isActive ? 'Active' : 'Inactive'}</div>
-                      <div><span className="text-gray-600">Last Login:</span> {formatDate(student.lastLogin)}</div>
-                      <div><span className="text-gray-600">Created At:</span> {formatDate(student.createdAt)}</div>
-                      <div><span className="text-gray-600">Updated At:</span> {formatDate(student.updatedAt)}</div>
-                    </div>
-                  </div>
+            {/* Contact — full width */}
+            <div className="md:col-span-2">
+              <Section title="Contact & Address">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                  <Field label="Email"     value={student.email} />
+                  <Field label="Contact"   value={student.contactNumber} />
+                  <Field label="Alternate" value={student.alternateContact} />
+                  <Field label="Address"   value={student.address} />
+                  <Field label="City"      value={student.city} />
+                  <Field label="State"     value={student.state} />
+                  <Field label="Pincode"   value={student.pincode} />
                 </div>
+              </Section>
+            </div>
 
-                <div className="mt-6 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                  >
-                    Close
-                  </button>
+            {/* Parent — full width */}
+            <div className="md:col-span-2">
+              <Section title="Parent / Guardian">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6">
+                  <Field label="Father"         value={student.fatherName} />
+                  <Field label="Mother"         value={student.motherName} />
+                  <Field label="Guardian"       value={student.guardianName} />
+                  <Field label="Parent Contact" value={student.parentContact} />
+                  <Field label="Parent Email"   value={student.parentEmail} />
+                  <Field label="Occupation"     value={student.parentOccupation} />
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </Section>
+            </div>
+
+            {/* 10th */}
+            <Section title="10th Qualification">
+              <Field label="Board"          value={student.tenthBoard} />
+              <Field label="Admit No."      value={student.tenthAdmitNumber} />
+              <Field label="Passing Year"   value={student.tenthPassingYear} />
+              <Field label="Marks Obtained" value={`${student.tenthMarksObtained || 'N/A'} / 600`} />
+              {student.tenthMarksObtained && (
+                <Field label="Percentage" value={`${((student.tenthMarksObtained / 600) * 100).toFixed(2)}%`} />
+              )}
+            </Section>
+
+            {/* 12th */}
+            <Section title="12th Qualification">
+              <Field label="Board"          value={student.twelfthBoard} />
+              <Field label="Admit No."      value={student.twelfthAdmitNumber} />
+              <Field label="Passing Year"   value={student.twelfthPassingYear} />
+              <Field label="Marks Obtained" value={`${student.twelfthMarksObtained || 'N/A'} / ${student.twelfthTotalMarks || 'N/A'}`} />
+              {student.twelfthMarksObtained && student.twelfthTotalMarks && (
+                <Field label="Percentage" value={`${((student.twelfthMarksObtained / student.twelfthTotalMarks) * 100).toFixed(2)}%`} />
+              )}
+            </Section>
+
+            {/* Academic — full width */}
+            <div className="md:col-span-2">
+              <Section title="Academic Details" color="blue">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6">
+                  <Field label="Admission Year" value={student.admissionYear} />
+                  <Field label="Batch"          value={student.batch} />
+                  <Field label="Department"     value={student.department?.name} />
+                  <Field label="Semester"       value={student.semesterID?.semesterName} />
+                  <Field label="Current Year"   value={student.currentYear} />
+                </div>
+              </Section>
+            </div>
+
+            {/* System — full width */}
+            <div className="md:col-span-2">
+              <Section title="System & Status">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                  <Field label="Status"     value={student.isActive ? 'Active' : 'Inactive'} />
+                  <Field label="Last Login" value={formatDate(student.lastLogin)} />
+                  <Field label="Created At" value={formatDate(student.createdAt)} />
+                  <Field label="Updated At" value={formatDate(student.updatedAt)} />
+                </div>
+              </Section>
+            </div>
+
           </div>
         </div>
-      </Dialog>
-    </Transition>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 flex justify-end flex-shrink-0">
+          <button onClick={onClose}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
