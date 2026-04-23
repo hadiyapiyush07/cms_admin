@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Pencil, Trash2, Image, Plus, CalendarDays } from 'lucide-react';
 
+// Helper: format YYYY-MM-DD to "DD MMM YYYY"
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).replace(/ /g, ' '); // e.g., "26 Jan 2025"
+};
+
 const HandleGallery = () => {
   const [title, setTitle]           = useState('');
   const [date, setDate]             = useState('');
@@ -22,6 +34,9 @@ const HandleGallery = () => {
   const [editNewPhotoFiles, setEditNewPhotoFiles] = useState([]);
   const [editRemovedPhotos, setEditRemovedPhotos] = useState([]);
   const [updating, setUpdating]                 = useState(false);
+
+  // Get today's date in YYYY-MM-DD format for the max attribute
+  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     fetchEvents();
@@ -185,8 +200,11 @@ const HandleGallery = () => {
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Date <span className="text-red-500">*</span></label>
             <input
-              type="text" value={date} onChange={(e) => setDate(e.target.value)}
-              className={inputClass} placeholder="e.g. 26 Jan 2026"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              max={today}   // ✅ Prevents selecting future dates
+              className={inputClass}
             />
           </div>
         </div>
@@ -244,7 +262,7 @@ const HandleGallery = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white text-xs font-medium">
-                    <CalendarDays size={12} /> {event.date}
+                    <CalendarDays size={12} /> {formatDate(event.date)}   {/* ✅ formatted date */}
                   </div>
                 </div>
                 <div className="p-4">
@@ -295,7 +313,14 @@ const HandleGallery = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Event Date <span className="text-red-500">*</span></label>
-                <input type="text" value={editDate} onChange={(e) => setEditDate(e.target.value)} required className={inputClass} />
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  max={today}   // ✅ prevents future dates in edit modal as well
+                  required
+                  className={inputClass}
+                />
               </div>
 
               <div>
