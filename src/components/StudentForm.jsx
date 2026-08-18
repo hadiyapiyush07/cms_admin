@@ -267,7 +267,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
       try {
         const token = localStorage.getItem('authToken');
         const response = await axios.get(
-          `http://localhost:5000/api/admin/students/next-enrollment?year=${formData.admissionYear}&department=${formData.department}`,
+          `https://cms-backend-wl7u.onrender.com/api/admin/students/next-enrollment?year=${formData.admissionYear}&department=${formData.department}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.success) {
@@ -315,8 +315,8 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
         const [deptRes, semRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/departments', { headers }),
-          axios.get('http://localhost:5000/api/semesters',   { headers }),
+          axios.get('https://cms-backend-wl7u.onrender.com/api/departments', { headers }),
+          axios.get('https://cms-backend-wl7u.onrender.com/api/semesters',   { headers }),
         ]);
         if (deptRes.data.success) setDepartments(deptRes.data.data);
         if (semRes.data.success)  { setAllSemesters(semRes.data.data); setFilteredSemesters(semRes.data.data); }
@@ -415,7 +415,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
       const token = localStorage.getItem('authToken');
       const fd    = new FormData();
       fd.append('file', file);
-      const res = await fetch('http://localhost:5000/api/upload/StudentPhoto', {
+      const res = await fetch('https://cms-backend-wl7u.onrender.com/api/upload/StudentPhoto', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
@@ -448,7 +448,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     try {
       const token = localStorage.getItem('authToken');
       const response = await axios.get(
-        `http://localhost:5000/api/admin/students/next-enrollment?year=${formData.admissionYear}&department=${formData.department}`,
+        `https://cms-backend-wl7u.onrender.com/api/admin/students/next-enrollment?year=${formData.admissionYear}&department=${formData.department}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
@@ -481,8 +481,8 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     try {
       const token  = localStorage.getItem('authToken');
       const url    = mode === 'add'
-        ? 'http://localhost:5000/api/admin/students'
-        : `http://localhost:5000/api/admin/students/${initialData._id}`;
+        ? 'https://cms-backend-wl7u.onrender.com/api/admin/students'
+        : `https://cms-backend-wl7u.onrender.com/api/admin/students/${initialData._id}`;
       const method = mode === 'add' ? axios.post : axios.put;
       const submitData = { ...formData };
       if (mode === 'edit' && !submitData.password) delete submitData.password;

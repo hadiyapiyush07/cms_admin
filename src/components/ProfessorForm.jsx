@@ -180,7 +180,7 @@ const ProfessorForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     (async () => {
       const token = localStorage.getItem('authToken');
       try {
-        const res = await axios.get('http://localhost:5000/api/departments', {
+        const res = await axios.get('https://cms-backend-wl7u.onrender.com/api/departments', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) setDepartments(res.data.data);
@@ -199,7 +199,7 @@ const ProfessorForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     try {
       const token = localStorage.getItem('authToken');
       const res = await axios.get(
-        `http://localhost:5000/api/subjects?department=${departmentId}`,
+        `https://cms-backend-wl7u.onrender.com/api/subjects?department=${departmentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       let subjects = [];
@@ -328,12 +328,12 @@ const ProfessorForm = ({ initialData = null, mode = 'add', onSuccess }) => {
 
       let response;
       if (mode === 'add') {
-        response = await axios.post('http://localhost:5000/api/professor', submitData, {
+        response = await axios.post('https://cms-backend-wl7u.onrender.com/api/professor', submitData, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
       } else {
         response = await axios.put(
-          `http://localhost:5000/api/professor/${initialData._id}`,
+          `https://cms-backend-wl7u.onrender.com/api/professor/${initialData._id}`,
           submitData,
           { headers: { Authorization: `Bearer ${token}` } }
         );

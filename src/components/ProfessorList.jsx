@@ -16,7 +16,7 @@ const fetchAllProfessorsForReport = async (filters) => {
     ...(filters.department && { department: filters.department }),
     ...(filters.search     && { search:     filters.search     }),
   });
-  const res = await axios.get(`http://localhost:5000/api/professor?${params}`, {
+  const res = await axios.get(`https://cms-backend-wl7u.onrender.com/api/professor?${params}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data.success ? res.data.data : [];
@@ -193,7 +193,7 @@ const ProfessorList = ({ onEdit }) => {
     (async () => {
       const token = localStorage.getItem('authToken');
       try {
-        const res = await axios.get('http://localhost:5000/api/departments', {
+        const res = await axios.get('https://cms-backend-wl7u.onrender.com/api/departments', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) setDepartments(res.data.data);
@@ -212,7 +212,7 @@ const ProfessorList = ({ onEdit }) => {
           ...(selectedDept && { department: selectedDept }),
           ...(searchTerm   && { search:     searchTerm   }),
         });
-        const response = await axios.get(`http://localhost:5000/api/professor?${params}`, {
+        const response = await axios.get(`https://cms-backend-wl7u.onrender.com/api/professor?${params}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.success) {
@@ -257,7 +257,7 @@ const ProfessorList = ({ onEdit }) => {
     setDeleteLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:5000/api/professor/${professorToDelete._id}`, {
+      await axios.delete(`https://cms-backend-wl7u.onrender.com/api/professor/${professorToDelete._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfessors(prev => prev.filter(p => p._id !== professorToDelete._id));

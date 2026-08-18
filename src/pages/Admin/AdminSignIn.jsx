@@ -54,7 +54,7 @@ const AdminSignIn = () => {
     setApiError("");
 
     try {
-      const endpoint = "http://localhost:5000/api/auth/admin/login";
+      const endpoint = "https://cms-backend-wl7u.onrender.com/api/auth/admin/login";
       const payload = { email, password };
 
       console.log("📡 Sending request to:", endpoint);

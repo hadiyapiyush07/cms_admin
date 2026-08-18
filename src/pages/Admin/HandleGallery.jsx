@@ -45,7 +45,7 @@ const HandleGallery = () => {
 
   const fetchEvents = async () => {
     try {
-      const res  = await fetch('http://localhost:5000/api/events');
+      const res  = await fetch('https://cms-backend-wl7u.onrender.com/api/events');
       const data = await res.json();
       setEvents(data);
     } catch (error) { console.error('Error fetching events:', error); }
@@ -55,7 +55,7 @@ const HandleGallery = () => {
   const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('http://localhost:5000/api/upload', {
+    const res = await fetch('https://cms-backend-wl7u.onrender.com/api/upload', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
       body: formData,
@@ -82,7 +82,7 @@ const HandleGallery = () => {
       const photoUrls  = [];
       for (let file of photoFiles) photoUrls.push(await uploadFile(file));
 
-      const eventRes = await fetch('http://localhost:5000/api/events', {
+      const eventRes = await fetch('https://cms-backend-wl7u.onrender.com/api/events', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ const HandleGallery = () => {
   const handleDelete = async (eventId) => {
     if (!window.confirm('Delete this event?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+      const res = await fetch(`https://cms-backend-wl7u.onrender.com/api/events/${eventId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
       });
@@ -140,7 +140,7 @@ const HandleGallery = () => {
       const newPhotoUrls = [];
       for (let file of editNewPhotoFiles) newPhotoUrls.push(await uploadFile(file));
 
-      const res = await fetch(`http://localhost:5000/api/events/${editingEvent._id}`, {
+      const res = await fetch(`https://cms-backend-wl7u.onrender.com/api/events/${editingEvent._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

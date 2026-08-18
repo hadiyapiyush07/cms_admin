@@ -18,7 +18,7 @@ const fetchAllStudentsForReport = async (filters) => {
     ...(filters.semester   && { semester:   filters.semester   }),
     ...(filters.search     && { search:     filters.search     }),
   });
-  const res = await axios.get(`http://localhost:5000/api/admin/students?${params}`, {
+  const res = await axios.get(`https://cms-backend-wl7u.onrender.com/api/admin/students?${params}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data.success ? res.data.data : [];
@@ -514,8 +514,8 @@ const StudentList = ({ onEdit }) => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
         const [deptRes, semRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/departments', { headers }),
-          axios.get('http://localhost:5000/api/semesters', { headers }),
+          axios.get('https://cms-backend-wl7u.onrender.com/api/departments', { headers }),
+          axios.get('https://cms-backend-wl7u.onrender.com/api/semesters', { headers }),
         ]);
         if (deptRes.data.success) setDepartments(deptRes.data.data);
         if (semRes.data.success)  setSemesters(semRes.data.data);
@@ -535,7 +535,7 @@ const StudentList = ({ onEdit }) => {
           ...(selectedDiv  && { division:   selectedDiv   }),
           ...(searchTerm   && { search:     searchTerm    }),
         });
-        const response = await axios.get(`http://localhost:5000/api/admin/students?${params}`, {
+        const response = await axios.get(`https://cms-backend-wl7u.onrender.com/api/admin/students?${params}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.success) {
@@ -589,7 +589,7 @@ const StudentList = ({ onEdit }) => {
     setDeleteLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:5000/api/admin/students/${studentToDelete._id}`, {
+      await axios.delete(`https://cms-backend-wl7u.onrender.com/api/admin/students/${studentToDelete._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStudents(prev => prev.filter(s => s._id !== studentToDelete._id));

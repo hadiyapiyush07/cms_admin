@@ -68,7 +68,7 @@ const ChangePassword = () => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5000/api/auth/change-password",
+        "https://cms-backend-wl7u.onrender.com/api/auth/change-password",
         {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,

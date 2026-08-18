@@ -17,8 +17,8 @@ const StudentBulkUpload = ({ onSuccess }) => {
       const headers = { Authorization: `Bearer ${token}` };
       try {
         const [deptRes, semRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/departments', { headers }),
-          axios.get('http://localhost:5000/api/semesters', { headers }),
+          axios.get('https://cms-backend-wl7u.onrender.com/api/departments', { headers }),
+          axios.get('https://cms-backend-wl7u.onrender.com/api/semesters', { headers }),
         ]);
         if (deptRes.data.success) setDepartments(deptRes.data.data);
         if (semRes.data.success) setSemesters(semRes.data.data);
@@ -86,7 +86,7 @@ const StudentBulkUpload = ({ onSuccess }) => {
         });
 
         const token = localStorage.getItem('authToken');
-        const response = await axios.post('http://localhost:5000/api/admin/students/bulk', { students }, {
+        const response = await axios.post('https://cms-backend-wl7u.onrender.com/api/admin/students/bulk', { students }, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

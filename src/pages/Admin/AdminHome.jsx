@@ -56,7 +56,7 @@ const AdminHome = () => {
       const token = localStorage.getItem('authToken');
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5000/api/admin/profile', {
+          const response = await axios.get('https://cms-backend-wl7u.onrender.com/api/admin/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.success) {
@@ -99,7 +99,7 @@ const AdminHome = () => {
     setUpgrading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const response = await axios.post('http://localhost:5000/api/admin/semester/upgrade', {}, {
+      const response = await axios.post('https://cms-backend-wl7u.onrender.com/api/admin/semester/upgrade', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {

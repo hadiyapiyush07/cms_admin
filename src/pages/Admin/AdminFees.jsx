@@ -32,7 +32,7 @@ const fetchAllStudentsForReport = async (filters) => {
     ...(filters.search     && { search:     filters.search     }),
   });
   const res = await axios.get(
-    `http://localhost:5000/api/fees/admin/semester-wise?${params}`,
+    `https://cms-backend-wl7u.onrender.com/api/fees/admin/semester-wise?${params}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return res.data.success ? res.data.data : [];
@@ -322,8 +322,8 @@ const AdminFees = () => {
     try {
       const token = localStorage.getItem('authToken');
       const [deptRes, semRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/departments', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/semesters',   { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('https://cms-backend-wl7u.onrender.com/api/departments', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('https://cms-backend-wl7u.onrender.com/api/semesters',   { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       if (deptRes.data.success) {
         let fetchedDepts = deptRes.data.data;
@@ -350,7 +350,7 @@ const AdminFees = () => {
         ...(filters.semester   && { semester:   filters.semester   }),
         ...(filters.search     && { search:     filters.search     }),
       });
-      const res = await axios.get(`http://localhost:5000/api/fees/admin/summary?${params}`, {
+      const res = await axios.get(`https://cms-backend-wl7u.onrender.com/api/fees/admin/summary?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) setSummary(res.data);
@@ -368,7 +368,7 @@ const AdminFees = () => {
         ...(filters.semester   && { semester:   filters.semester   }),
         ...(filters.search     && { search:     filters.search     }),
       });
-      const res = await axios.get(`http://localhost:5000/api/fees/admin/semester-wise?${params}`, {
+      const res = await axios.get(`https://cms-backend-wl7u.onrender.com/api/fees/admin/semester-wise?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
@@ -422,7 +422,7 @@ const AdminFees = () => {
       let reportSummary = summary;
       if (isAll) {
         const token = localStorage.getItem('authToken');
-        const res   = await axios.get('http://localhost:5000/api/fees/admin/summary', {
+        const res   = await axios.get('https://cms-backend-wl7u.onrender.com/api/fees/admin/summary', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) reportSummary = res.data;

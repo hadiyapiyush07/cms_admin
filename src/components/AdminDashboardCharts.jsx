@@ -13,7 +13,7 @@ const AdminDashboardCharts = () => {
     const fetchAnalytics = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await axios.get('http://localhost:5000/api/admin/analytics', {
+        const res = await axios.get('https://cms-backend-wl7u.onrender.com/api/admin/analytics', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {

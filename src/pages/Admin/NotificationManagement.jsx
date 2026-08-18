@@ -17,7 +17,7 @@ const NotificationManagement = () => {
     (async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await axios.get('http://localhost:5000/api/departments', {
+        const res = await axios.get('https://cms-backend-wl7u.onrender.com/api/departments', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
@@ -44,7 +44,7 @@ const NotificationManagement = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const res = await axios.get(`http://localhost:5000/api/notifications?department=${deptId}`, {
+      const res = await axios.get(`https://cms-backend-wl7u.onrender.com/api/notifications?department=${deptId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) setNotifications(res.data.data);
@@ -73,7 +73,7 @@ const NotificationManagement = () => {
       data.append('department', selectedDept);
       formData.attachments.forEach(file => data.append('attachments', file));
 
-      const res = await axios.post('http://localhost:5000/api/notifications', data, {
+      const res = await axios.post('https://cms-backend-wl7u.onrender.com/api/notifications', data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
       if (res.data.success) {
@@ -90,7 +90,7 @@ const NotificationManagement = () => {
     if (!window.confirm('Delete this notification?')) return;
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`, {
+      await axios.delete(`https://cms-backend-wl7u.onrender.com/api/notifications/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.filter(n => n._id !== id));
