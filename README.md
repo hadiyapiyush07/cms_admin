@@ -1,16 +1,44 @@
-# React + Vite
+# ⚙️ CampusFlow - Admin Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to the **CampusFlow Admin Dashboard**, the central control panel for managing the entire college ecosystem. Designed for speed, security, and ease of use.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Role-Based Access Control (RBAC):**
+  - **Super Admins:** Full system access, can create other admins, and manage all departments.
+  - **Department Admins:** Restricted access to manage only their assigned department (e.g., MBA, BBA).
+- **Student Management:** Add, edit, remove, and view student profiles. Support for **Bulk Upload** via Excel.
+- **Professor Management:** Assign professors to specific subjects and departments.
+- **Semester Upgrade System:** Automated workflow to upgrade students to the next semester or graduate them.
+- **Visual Analytics:** Interactive Pie Charts and statistics for total students, professors, and department distribution.
+- **Notifications & Gallery:** Broadcast announcements and manage the college photo gallery.
 
-## React Compiler
+## 💻 Tech Stack
+- **Framework:** React.js (Vite)
+- **Styling:** Tailwind CSS
+- **Routing:** React Router DOM
+- **Charts:** Recharts
+- **PDF Generation:** jsPDF & html2canvas
+- **Data Export:** XLSX (SheetJS)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Installation & Setup
 
-## Expanding the ESLint configuration
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/hadiyapiyush07/cms_admin.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd cms_admin
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+*Built with ❤️ by the CampusFlow Team.*
