@@ -40,8 +40,5 @@ Welcome to the **CampusFlow Admin Dashboard**, the central control panel for man
    npm run dev
    ```
 
-## 🌐 Live Preview
-*Deploy this repository to Vercel/Netlify for a live preview.*
-
 ---
 *Built with ❤️ by the CampusFlow Team.*
