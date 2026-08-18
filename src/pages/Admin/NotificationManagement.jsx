@@ -20,7 +20,18 @@ const NotificationManagement = () => {
         const res = await axios.get('http://localhost:5000/api/departments', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.data.success) setDepartments(res.data.data);
+        if (res.data.success) {
+          let fetchedDepts = res.data.data;
+          const userStr = localStorage.getItem('adminData');
+          const user = userStr ? JSON.parse(userStr) : null;
+          
+          if (user?.role === 'DepartmentAdmin' && user?.department) {
+             const deptId = typeof user.department === 'string' ? user.department : user.department._id;
+             fetchedDepts = fetchedDepts.filter(d => d._id === deptId);
+             setSelectedDept(deptId);
+          }
+          setDepartments(fetchedDepts);
+        }
       } catch (err) { console.error(err); }
     })();
   }, []);

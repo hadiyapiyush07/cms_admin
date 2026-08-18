@@ -19,7 +19,16 @@ const SubjectManager = () => {
     (async () => {
       try {
         const res = await axios.get('/departments');
-        setDepartments(res.data.data || res.data);
+        const depts = res.data.data || res.data;
+        setDepartments(depts);
+        
+        // Auto-select for DepartmentAdmin
+        const userStr = localStorage.getItem('adminData');
+        const user = userStr ? JSON.parse(userStr) : null;
+        if (user?.role === 'DepartmentAdmin' && user?.department) {
+          const deptObj = typeof user.department === 'string' ? user.department : user.department._id;
+          setSelectedDept(deptObj || '');
+        }
       } catch { setError('Could not load departments'); }
     })();
   }, []);
@@ -117,7 +126,12 @@ const SubjectManager = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
-            <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)} className={selectClass}>
+            <select 
+              value={selectedDept} 
+              onChange={(e) => setSelectedDept(e.target.value)} 
+              className={selectClass}
+              disabled={JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin'}
+            >
               <option value="">Select Department</option>
               {departments.map(dept => (
                 <option key={dept._id} value={dept._id}>{dept.name}</option>

@@ -5,6 +5,7 @@ import StudentManagement from './pages/Admin/StudentManagement';
 import ProfessorManagement from './pages/Admin/ProfessorManagement';
 import HandleGallery from './pages/Admin/HandleGallery';
 import AdminHome from './pages/Admin/AdminHome';
+import AdminManagement from './pages/Admin/AdminManagement';
 import Notification from './pages/Admin/NotificationManagement';
 import Subject from './pages/Admin/SubjectHandle';
 import Fees from './pages/Admin/AdminFees';
@@ -30,6 +31,7 @@ function App() {
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="studentmanagement" element={<StudentManagement />} />
         <Route path="professormanagement" element={<ProfessorManagement />} />
+        <Route path="adminmanagement" element={<AdminManagement />} />
         <Route path="handlegallery" element={<HandleGallery />} />
         <Route path="notification" element={<Notification />} />
         <Route path="subject" element={<Subject/>}/>

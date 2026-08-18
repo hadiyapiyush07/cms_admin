@@ -134,9 +134,10 @@ const StudentViewModal = ({ student, onClose }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6">
                   <Field label="Admission Year" value={student.admissionYear} />
                   <Field label="Batch"          value={student.batch} />
-                  <Field label="Department"     value={student.department?.name} />
-                  <Field label="Semester"       value={student.semesterID?.semesterName} />
+                  <Field label="Department"     value={student.department?.name || 'N/A'} />
+                  <Field label="Semester"       value={student.isActive === false ? 'COMPLETED' : student.semesterID?.semesterName || 'N/A'} />
                   <Field label="Current Year"   value={student.currentYear} />
+                  <Field label="Division"       value={student.division || 'A'} />
                 </div>
               </Section>
             </div>

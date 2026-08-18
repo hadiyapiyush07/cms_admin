@@ -1,14 +1,15 @@
-// src/cms_admin/pages/StudentManagement.jsx
 import { useState } from 'react';
 import StudentForm from '../../components/StudentForm';
 import StudentList from '../../components/StudentList';
-import { Plus, ArrowLeft, Users } from 'lucide-react';
+import StudentBulkUpload from '../../components/StudentBulkUpload';
+import { Plus, ArrowLeft, Users, UploadCloud } from 'lucide-react';
 
 const StudentManagement = () => {
-  const [view, setView]             = useState('list');
+  const [view, setView]             = useState('list'); // 'list', 'form', 'bulk'
   const [editStudent, setEditStudent] = useState(null);
 
   const handleAddClick   = () => { setEditStudent(null); setView('form'); };
+  const handleBulkClick  = () => { setEditStudent(null); setView('bulk'); };
   const handleEditClick  = (student) => { setEditStudent(student); setView('form'); };
   const handleFormSuccess = () => { setView('list'); setEditStudent(null); };
   const handleCancel     = () => { setView('list'); setEditStudent(null); };
@@ -25,18 +26,26 @@ const StudentManagement = () => {
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-800">Student Management</h1>
             <p className="text-slate-500 text-xs mt-0.5">
-              {view === 'list' ? 'View and manage all students' : editStudent ? 'Edit student details' : 'Add a new student'}
+              {view === 'list' ? 'View and manage all students' : view === 'bulk' ? 'Bulk upload students' : editStudent ? 'Edit student details' : 'Add a new student'}
             </p>
           </div>
         </div>
 
         {view === 'list' ? (
-          <button
-            onClick={handleAddClick}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition self-start sm:self-auto"
-          >
-            <Plus size={16} /> Add New Student
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleBulkClick}
+              className="flex items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95 px-4 py-2.5 rounded-xl text-sm font-semibold transition self-start sm:self-auto border border-blue-200"
+            >
+              <UploadCloud size={16} /> Bulk Upload
+            </button>
+            <button
+              onClick={handleAddClick}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition self-start sm:self-auto"
+            >
+              <Plus size={16} /> Add New
+            </button>
+          </div>
         ) : (
           <button
             onClick={handleCancel}
@@ -49,15 +58,15 @@ const StudentManagement = () => {
 
       {/* ── Content ── */}
       <div>
-        {view === 'list' ? (
-          <StudentList onEdit={handleEditClick} />
-        ) : (
+        {view === 'list' && <StudentList onEdit={handleEditClick} />}
+        {view === 'form' && (
           <StudentForm
             initialData={editStudent}
             mode={editStudent ? 'edit' : 'add'}
             onSuccess={handleFormSuccess}
           />
         )}
+        {view === 'bulk' && <StudentBulkUpload onSuccess={handleFormSuccess} />}
       </div>
     </div>
   );

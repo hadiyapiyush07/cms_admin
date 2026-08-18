@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import AdminDashboardCharts from '../../components/AdminDashboardCharts';
 import {
   Users, GraduationCap, Image, LogOut,
   KeyRound, Mail, Phone, Calendar, Clock,
-  ShieldCheck, BadgeCheck
+  ShieldCheck, BadgeCheck, ArrowUpCircle, Loader2
 } from 'lucide-react';
 
 // ── Helper Components (defined outside to avoid re-mount) ──────────────────
@@ -26,7 +27,7 @@ const ActionCard = ({ title, description, icon: Icon, gradient, onClick }) => (
     onClick={onClick}
     className={`${gradient} text-white p-5 md:p-6 rounded-2xl shadow-lg hover:shadow-xl
       transform hover:-translate-y-1 transition-all duration-300 cursor-pointer
-      active:scale-95`}
+      active:scale-95 flex flex-col items-start`}
   >
     <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
       <Icon size={24} className="text-white" />
@@ -41,6 +42,7 @@ const ActionCard = ({ title, description, icon: Icon, gradient, onClick }) => (
 const AdminHome = () => {
   const [adminData, setAdminData] = useState(null);
   const [loading, setLoading]     = useState(true);
+  const [upgrading, setUpgrading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => { loadAdminData(); }, []);
@@ -84,6 +86,33 @@ const AdminHome = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('adminData');
     navigate('/admin/signin');
+  };
+
+  const handleUpgrade = async () => {
+    const confirmation = window.prompt("WARNING: You are about to upgrade ALL active students to the next semester. This action CANNOT be undone.\n\nType 'CONFIRM' to proceed:");
+    
+    if (confirmation !== "CONFIRM") {
+      alert("Upgrade cancelled. You did not type 'CONFIRM' exactly.");
+      return;
+    }
+    
+    setUpgrading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.post('http://localhost:5000/api/admin/semester/upgrade', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        const { upgraded, graduated, errors } = response.data.data;
+        alert(`Upgrade Complete!\n\nStudents Upgraded: ${upgraded}\nStudents Graduated: ${graduated}\nErrors: ${errors}`);
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Upgrade error', error);
+      alert('Failed to upgrade semesters. Check console for details.');
+    } finally {
+      setUpgrading(false);
+    }
   };
 
   // ── Loading ──
@@ -195,29 +224,60 @@ const AdminHome = () => {
       {/* ── Quick Action Cards ── */}
       <div>
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ActionCard
-            title="Student Management"
-            description="Add, edit, or remove student accounts"
-            icon={Users}
-            gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
-            onClick={() => navigate('/admin/studentmanagement')}
-          />
-          <ActionCard
-            title="Professor Management"
-            description="Manage faculty and professor accounts"
-            icon={GraduationCap}
-            gradient="bg-gradient-to-br from-purple-500 to-purple-700"
-            onClick={() => navigate('/admin/professormanagement')}
-          />
-          <ActionCard
-            title="Gallery"
-            description="Upload and manage college gallery images"
-            icon={Image}
-            gradient="bg-gradient-to-br from-orange-500 to-orange-700"
-            onClick={() => navigate('/admin/handlegallery')}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {adminData?.role === 'SuperAdmin' ? (
+            <>
+              <ActionCard
+                title="Admin Management"
+                description="Manage system administrators"
+                icon={Users}
+                gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
+                onClick={() => navigate('/admin/adminmanagement')}
+              />
+              <ActionCard
+                title="Gallery"
+                description="Upload and manage college gallery images"
+                icon={Image}
+                gradient="bg-gradient-to-br from-orange-500 to-orange-700"
+                onClick={() => navigate('/admin/handlegallery')}
+              />
+            </>
+          ) : (
+            <>
+              <ActionCard
+                title="Student Management"
+                description="Add, edit, or remove student accounts"
+                icon={Users}
+                gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
+                onClick={() => navigate('/admin/studentmanagement')}
+              />
+              <ActionCard
+                title="Professor Management"
+                description="Manage faculty and professor accounts"
+                icon={GraduationCap}
+                gradient="bg-gradient-to-br from-purple-500 to-purple-700"
+                onClick={() => navigate('/admin/professormanagement')}
+              />
+          <button
+            onClick={handleUpgrade}
+            disabled={upgrading}
+            className={`text-white p-5 md:p-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-95 flex flex-col items-start bg-gradient-to-br from-blue-500 to-blue-700 ${upgrading ? 'opacity-75 cursor-not-allowed' : ''}`}
+          >
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+              {upgrading ? <Loader2 size={24} className="text-white animate-spin" /> : <ArrowUpCircle size={24} className="text-white" />}
+            </div>
+            <h3 className="text-lg font-bold mb-1">{upgrading ? 'Upgrading...' : 'Upgrade Semesters'}</h3>
+            <p className="text-white/80 text-sm leading-relaxed text-left">Auto-promote all students to the next semester</p>
+          </button>
+            </>
+          )}
         </div>
+      </div>
+
+      {/* ── Analytics Dashboard ── */}
+      <div>
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3 mt-4">Analytics Overview</h3>
+        <AdminDashboardCharts />
       </div>
 
       {/* ── Admin Details ── */}

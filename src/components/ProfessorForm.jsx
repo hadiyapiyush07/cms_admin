@@ -357,10 +357,12 @@ const ProfessorForm = ({ initialData = null, mode = 'add', onSuccess }) => {
         setSubmitError(`Email "${formData.email}" is already registered.`);
       else if (errorMessage.includes('contactNumber already exists'))
         setSubmitError(`Contact number "${formData.contactNumber}" is already registered.`);
-      else if (err.request)
+      else if (errorMessage)
+        setSubmitError(errorMessage);
+      else if (err.request && !err.response)
         setSubmitError('Cannot connect to server. Please check if backend is running.');
       else
-        setSubmitError(errorMessage || err.message || 'An error occurred.');
+        setSubmitError(err.message || 'An error occurred.');
     } finally {
       setSubmitting(false);
     }

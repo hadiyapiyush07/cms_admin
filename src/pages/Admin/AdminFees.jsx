@@ -325,7 +325,18 @@ const AdminFees = () => {
         axios.get('http://localhost:5000/api/departments', { headers: { Authorization: `Bearer ${token}` } }),
         axios.get('http://localhost:5000/api/semesters',   { headers: { Authorization: `Bearer ${token}` } }),
       ]);
-      if (deptRes.data.success) setDepartments(deptRes.data.data);
+      if (deptRes.data.success) {
+        let fetchedDepts = deptRes.data.data;
+        const userStr = localStorage.getItem('adminData');
+        const user = userStr ? JSON.parse(userStr) : null;
+        
+        if (user?.role === 'DepartmentAdmin' && user?.department) {
+           const deptId = typeof user.department === 'string' ? user.department : user.department._id;
+           fetchedDepts = fetchedDepts.filter(d => d._id === deptId);
+           setFilters(prev => ({ ...prev, department: deptId, page: 1 }));
+        }
+        setDepartments(fetchedDepts);
+      }
       if (semRes.data.success)  setSemesters(semRes.data.data);
     } catch (err) { console.error(err); }
   };
@@ -605,11 +616,20 @@ const AdminFees = () => {
             <select
               name="department" value={filters.department} onChange={handleFilterChange}
               className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              disabled={JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin'}
             >
-              <option value="">All Departments</option>
-              {departments.map(dept => (
-                <option key={dept._id} value={dept._id}>{dept.name}</option>
-              ))}
+              {JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin' ? (
+                <option value={JSON.parse(localStorage.getItem('adminData'))?.department?._id || JSON.parse(localStorage.getItem('adminData'))?.department || ''}>
+                  {departments.find(d => d._id === (JSON.parse(localStorage.getItem('adminData'))?.department?._id || JSON.parse(localStorage.getItem('adminData'))?.department))?.name || 'Your Department'}
+                </option>
+              ) : (
+                <>
+                  <option value="">All Departments</option>
+                  {departments.map(dept => (
+                    <option key={dept._id} value={dept._id}>{dept.name}</option>
+                  ))}
+                </>
+              )}
             </select>
           </div>
 

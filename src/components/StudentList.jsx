@@ -490,6 +490,7 @@ const StudentList = ({ onEdit }) => {
   const [deleteLoading, setDeleteLoading]     = useState(false);
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedSem, setSelectedSem]   = useState('');
+  const [selectedDiv, setSelectedDiv]   = useState('');
   const [searchTerm, setSearchTerm]     = useState('');
   const [viewStudent, setViewStudent]   = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -531,6 +532,7 @@ const StudentList = ({ onEdit }) => {
           page, limit,
           ...(selectedDept && { department: selectedDept }),
           ...(selectedSem  && { semester:   selectedSem   }),
+          ...(selectedDiv  && { division:   selectedDiv   }),
           ...(searchTerm   && { search:     searchTerm    }),
         });
         const response = await axios.get(`http://localhost:5000/api/admin/students?${params}`, {
@@ -550,13 +552,18 @@ const StudentList = ({ onEdit }) => {
       } catch (err) { setError(err.response?.data?.message || 'Error fetching students.'); }
       finally { setLoading(false); }
     })();
-  }, [page, selectedDept, selectedSem, searchTerm]);
+  }, [page, selectedDept, selectedSem, selectedDiv, searchTerm]);
 
   const getFilterLabel = (isAll) => {
     if (isAll) return 'All Students';
     const deptName = departments.find(d => d._id === selectedDept)?.name;
     const semName  = semesters.find(s => s._id === selectedSem)?.semesterName;
     const parts = [];
+    if (deptName) parts.push(deptName);
+    if (selectedSem === 'completed') parts.push('Alumni (Completed)');
+    else if (semName) parts.push(semName);
+    if (selectedDiv) parts.push(`Div ${selectedDiv}`);
+    if (searchTerm) parts.push(`Search: "${searchTerm}"`);
     if (deptName)   parts.push(deptName);
     if (semName)    parts.push(semName);
     if (searchTerm) parts.push(`Search:${searchTerm}`);
@@ -617,13 +624,43 @@ const StudentList = ({ onEdit }) => {
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
         <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            <select value={selectedDept} onChange={(e) => { setSelectedDept(e.target.value); setPage(1); }} className={`${selectClass} sm:w-44`}>
-              <option value="">All Departments</option>
-              {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+            <select 
+              value={selectedDept} 
+              onChange={(e) => { setSelectedDept(e.target.value); setPage(1); }} 
+              className={`${selectClass} sm:w-44`}
+              disabled={JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin'}
+            >
+              {JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin' ? (
+                <option value={JSON.parse(localStorage.getItem('adminData'))?.department?._id || JSON.parse(localStorage.getItem('adminData'))?.department || ''}>
+                  {departments.find(d => d._id === (JSON.parse(localStorage.getItem('adminData'))?.department?._id || JSON.parse(localStorage.getItem('adminData'))?.department))?.name || 'Your Department'}
+                </option>
+              ) : (
+                <>
+                  <option value="">All Departments</option>
+                  {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+                </>
+              )}
             </select>
             <select value={selectedSem} onChange={(e) => { setSelectedSem(e.target.value); setPage(1); }} className={`${selectClass} sm:w-44`}>
               <option value="">All Semesters</option>
-              {semesters.map(s => <option key={s._id} value={s._id}>{s.semesterName}</option>)}
+              {semesters.filter(s => {
+                if (!selectedDept) return true;
+                const dept = departments.find(d => d._id === selectedDept);
+                if (!dept) return true;
+                const isMaster = ['MCA', 'MBA', 'MCOM'].some(m => dept.name.toUpperCase().includes(m));
+                if (isMaster) {
+                  const num = parseInt(s.semesterName.replace('Semester ', ''), 10);
+                  return num <= 4;
+                }
+                return true;
+              }).map(s => <option key={s._id} value={s._id}>{s.semesterName}</option>)}
+              <option value="completed" className="font-semibold text-emerald-600">Completed / Alumni</option>
+            </select>
+            <select value={selectedDiv} onChange={(e) => { setSelectedDiv(e.target.value); setPage(1); }} className={`${selectClass} sm:w-32`}>
+              <option value="">All Divs</option>
+              <option value="A">Div A</option>
+              <option value="B">Div B</option>
+              <option value="C">Div C</option>
             </select>
             <form onSubmit={(e) => { e.preventDefault(); setPage(1); }} className="flex gap-2 flex-1">
               <div className="relative flex-1">
@@ -698,16 +735,26 @@ const StudentList = ({ onEdit }) => {
                       <p className="text-slate-500 text-sm font-medium">No students found</p>
                     </td>
                   </tr>
-                ) : students.map((s, idx) => (
-                  <tr key={s._id} className={`hover:bg-blue-50/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                ) : students.map((s, idx) => {
+                  const isGraduated = !s.isActive && (
+                    (s.semesterID?.semesterName === 'Semester 6' && ['BCA', 'BBA', 'BCOM'].some(d => s.department?.name?.toUpperCase().includes(d))) ||
+                    (s.semesterID?.semesterName === 'Semester 4' && ['MCA', 'MBA', 'MCOM'].some(d => s.department?.name?.toUpperCase().includes(d)))
+                  );
+
+                  return (
+                  <tr key={s._id} className={`hover:bg-blue-50/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'} ${!s.isActive && !isGraduated ? 'opacity-60' : ''}`}>
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{s.enrollmentNum}</span>
                     </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap text-sm font-medium text-slate-800">{s.name}</td>
+                    <td className="px-5 py-3.5 whitespace-nowrap text-sm font-medium text-slate-800">{s.name} {isGraduated && <span className="ml-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Alumni</span>}</td>
                     <td className="px-5 py-3.5 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">{s.email}</td>
                     <td className="px-5 py-3.5 whitespace-nowrap text-sm text-slate-500 hidden sm:table-cell">{s.department?.name || 'N/A'}</td>
                     <td className="px-5 py-3.5 whitespace-nowrap hidden sm:table-cell">
-                      <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">{s.semesterID?.semesterName || 'N/A'}</span>
+                      {isGraduated ? (
+                        <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md uppercase tracking-wide flex items-center inline-flex gap-1"><CheckCircle size={12}/> Completed</span>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">{s.semesterID?.semesterName || 'N/A'}</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-1.5">
@@ -734,7 +781,8 @@ const StudentList = ({ onEdit }) => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>

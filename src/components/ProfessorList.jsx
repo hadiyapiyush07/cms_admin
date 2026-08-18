@@ -299,9 +299,22 @@ const ProfessorList = ({ onEdit }) => {
         {/* Filters */}
         <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            <select value={selectedDept} onChange={(e) => { setSelectedDept(e.target.value); setPage(1); }} className={`${selectClass} sm:w-48`}>
-              <option value="">All Departments</option>
-              {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+            <select 
+              value={selectedDept} 
+              onChange={(e) => { setSelectedDept(e.target.value); setPage(1); }} 
+              className={`${selectClass} sm:w-48`}
+              disabled={JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin'}
+            >
+              {JSON.parse(localStorage.getItem('adminData'))?.role === 'DepartmentAdmin' ? (
+                <option value={JSON.parse(localStorage.getItem('adminData'))?.department?._id || JSON.parse(localStorage.getItem('adminData'))?.department || ''}>
+                  {departments.find(d => d._id === (JSON.parse(localStorage.getItem('adminData'))?.department?._id || JSON.parse(localStorage.getItem('adminData'))?.department))?.name || 'Your Department'}
+                </option>
+              ) : (
+                <>
+                  <option value="">All Departments</option>
+                  {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+                </>
+              )}
             </select>
             <form onSubmit={(e) => { e.preventDefault(); setPage(1); }} className="flex gap-2 flex-1">
               <div className="relative flex-1">

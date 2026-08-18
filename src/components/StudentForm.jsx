@@ -234,7 +234,7 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
     address: '', city: '', state: '', pincode: '',
     fatherName: '', motherName: '', guardianName: '',
     parentContact: '', parentEmail: '', parentOccupation: '',
-    admissionYear: '', batch: '', department: '', semesterID: '', currentYear: '',
+    admissionYear: '', batch: '', department: '', semesterID: '', currentYear: '', division: 'A',
     password: '', isActive: true, profilePicture: '',
     // SSC (10th)
     tenthBoard: '', tenthAdmitNumber: '', tenthPassingYear: '', tenthMarksObtained: '',
@@ -638,6 +638,15 @@ const StudentForm = ({ initialData = null, mode = 'add', onSuccess }) => {
         </Field>
         <Field label="Current Year (Auto)">
           <input type="number" value={formData.currentYear} readOnly className={icRO} />
+        </Field>
+        <Field label="Division" required>
+          <div data-field-error={undefined}>
+            <select name="division" value={formData.division} onChange={handleChange} className={inputClass('division', {})}>
+              <option value="A">Division A</option>
+              <option value="B">Division B</option>
+              <option value="C">Division C</option>
+            </select>
+          </div>
         </Field>
         {/* Academic Grade and PG Program Grade removed as requested */}
       </FormSection>

@@ -5,21 +5,58 @@ import {
   Bell, BookOpen, CreditCard, Menu, X, ChevronRight
 } from "lucide-react";
 
-const navItems = [
-  { to: "/admin",                    end: true,  icon: LayoutDashboard, label: "Profile"              },
-  { to: "/admin/studentmanagement",  end: false, icon: Users,           label: "Student Management"   },
-  { to: "/admin/professormanagement",end: false, icon: GraduationCap,   label: "Professor Management" },
-  { to: "/admin/handlegallery",      end: false, icon: Image,           label: "Handle Gallery"       },
-  { to: "/admin/notification",       end: false, icon: Bell,            label: "Notification"         },
-  { to: "/admin/subject",            end: false, icon: BookOpen,        label: "Manage Subject"       },
-  { to: "/admin/fees",               end: false, icon: CreditCard,      label: "Fees Status"          },
-];
+// Navigation items will be generated dynamically inside the component based on role
 
 const AdminLayout = () => {
   const navigate    = useNavigate();
   const location    = useLocation();
   const [open, setOpen] = useState(false);
   const sidebarRef  = useRef(null);
+
+  const [navItems, setNavItems] = useState([]);
+
+  useEffect(() => {
+    const updateNavItems = () => {
+      try {
+        const userStr = localStorage.getItem('adminData');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const isSuper = user?.role === 'SuperAdmin';
+        
+        const items = [
+          { to: "/admin",                    end: true,  icon: LayoutDashboard, label: "Profile"              },
+        ];
+        
+        if (isSuper) {
+          items.push(
+            { to: "/admin/adminmanagement", end: false, icon: Users, label: "Admin Management" },
+            { to: "/admin/handlegallery", end: false, icon: Image, label: "Handle Gallery" }
+          );
+        } else {
+          items.push(
+            { to: "/admin/studentmanagement",  end: false, icon: Users,           label: "Student Management"   },
+            { to: "/admin/professormanagement",end: false, icon: GraduationCap,   label: "Professor Management" },
+            { to: "/admin/notification",       end: false, icon: Bell,            label: "Notification"         },
+            { to: "/admin/subject",            end: false, icon: BookOpen,        label: "Manage Subject"       },
+            { to: "/admin/fees",               end: false, icon: CreditCard,      label: "Fees Status"          }
+          );
+        }
+        
+        setNavItems(items);
+      } catch (e) {
+        console.error('Error parsing user data', e);
+      }
+    };
+
+    updateNavItems();
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'authToken' || e.key === 'adminData') {
+        window.location.reload(); // Force full app reload if auth changes in another tab
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => { setOpen(false); }, [location.pathname]);
